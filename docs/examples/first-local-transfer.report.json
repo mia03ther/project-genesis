@@ -1,0 +1,190 @@
+{
+  "report_format": "genesis.scenario-report",
+  "report_version": 1,
+  "genesis_version": "0.1.0",
+  "status": "passed",
+  "error": null,
+  "scenario": {
+    "id": "first-local-transfer",
+    "version": "1.0.0",
+    "title": "First Local Blockchain Transfer",
+    "manifest_version": 1,
+    "manifest_digest": "66d982a9cb9938722088c23cc5c23a6a833569079b6a8c072900dcb7a547b602",
+    "source": "scenarios\\first-local-transfer\\scenario.toml"
+  },
+  "actor": "reference",
+  "environment": {
+    "kind": "anvil",
+    "managed_node": true,
+    "client_version": "anvil/v1.8.7",
+    "chain_id": 31337,
+    "rpc_url": "http://127.0.0.1:49183"
+  },
+  "summary": {
+    "runs": 1,
+    "passed_runs": 1,
+    "score": 13,
+    "max_score": 13,
+    "pass_threshold": 13
+  },
+  "runs": [
+    {
+      "run": 1,
+      "status": "passed",
+      "actor": "reference",
+      "submission": {
+        "from": "alice",
+        "to": "bob",
+        "value_wei": "1500000000000000000",
+        "gas_limit": 21000
+      },
+      "rejection_reasons": [],
+      "grading": {
+        "passed": true,
+        "score": 13,
+        "max_score": 13,
+        "pass_threshold": 13,
+        "failed_required": [],
+        "criteria": [
+          {
+            "id": "transaction-succeeded",
+            "check": "receipt_status",
+            "description": "The transaction was mined and its receipt status is 1 (success).",
+            "required": true,
+            "points": 2,
+            "awarded": 2,
+            "passed": true,
+            "expected": "success (1)",
+            "actual": "success (1)"
+          },
+          {
+            "id": "sent-by-alice",
+            "check": "sender",
+            "description": "The transaction was sent from alice's address.",
+            "required": false,
+            "points": 1,
+            "awarded": 1,
+            "passed": true,
+            "expected": "0x00000000000000000000000000000000000a11ce (alice)",
+            "actual": "0x00000000000000000000000000000000000a11ce (alice)"
+          },
+          {
+            "id": "sent-to-bob",
+            "check": "recipient",
+            "description": "The transaction was sent to bob's address.",
+            "required": true,
+            "points": 2,
+            "awarded": 2,
+            "passed": true,
+            "expected": "0x0000000000000000000000000000000000000b0b (bob)",
+            "actual": "0x0000000000000000000000000000000000000b0b (bob)"
+          },
+          {
+            "id": "exact-value",
+            "check": "value",
+            "description": "The transaction carried exactly 1.5 ether (1500000000000000000 wei).",
+            "required": true,
+            "points": 2,
+            "awarded": 2,
+            "passed": true,
+            "expected": "1500000000000000000 wei (1.5 ether)",
+            "actual": "1500000000000000000 wei (1.5 ether)"
+          },
+          {
+            "id": "bob-received-the-value",
+            "check": "final_balance",
+            "description": "Bob's balance is exactly 1.5 ether: the recipient pays no gas.",
+            "required": false,
+            "points": 2,
+            "awarded": 2,
+            "passed": true,
+            "expected": "bob: 1500000000000000000 wei (1.5 ether)",
+            "actual": "bob: 1500000000000000000 wei (1.5 ether)"
+          },
+          {
+            "id": "alice-paid-value-and-fee",
+            "check": "sender_pays_value_and_fee",
+            "description": "Alice's balance fell by exactly the value plus gas used times the effective gas price.",
+            "required": false,
+            "points": 2,
+            "awarded": 2,
+            "passed": true,
+            "expected": "alice pays 1500042000000000000 wei (value 1500000000000000000 + fee 21000 gas x 2000000000 wei)",
+            "actual": "alice paid 1500042000000000000 wei"
+          },
+          {
+            "id": "plain-transfer-gas",
+            "check": "gas_used",
+            "description": "A plain transfer to an account without code uses 21,000 gas.",
+            "required": false,
+            "points": 1,
+            "awarded": 1,
+            "passed": true,
+            "expected": "21000 gas",
+            "actual": "21000 gas"
+          },
+          {
+            "id": "alice-nonce-increased",
+            "check": "nonce_increment",
+            "description": "Alice's nonce rose by exactly one.",
+            "required": false,
+            "points": 1,
+            "awarded": 1,
+            "passed": true,
+            "expected": "alice: +1",
+            "actual": "alice: +1"
+          }
+        ]
+      },
+      "observation": {
+        "normalized": {
+          "chain_id": 31337,
+          "from": "alice",
+          "to": "bob",
+          "value_wei": "1500000000000000000",
+          "status": 1,
+          "gas_used": 21000,
+          "balances_before_wei": {
+            "alice": "10000000000000000000",
+            "bob": "0"
+          },
+          "balance_changes_excluding_fee_wei": {
+            "alice": "-1500000000000000000",
+            "bob": "1500000000000000000"
+          },
+          "nonce_changes": {
+            "alice": 1,
+            "bob": 0
+          }
+        },
+        "environment_specific": {
+          "transaction_hash": "0x22b49d2bc7eb1846a5b27d93ed008cd5528fc6939f8d9dc7af3b41cf141f7652",
+          "block_hash": "0xd1443b0643c90306fb9a71bf809d3890792cebe261ea41af8d6301707bd2cb2c",
+          "block_number": 1,
+          "effective_gas_price_wei": "2000000000",
+          "fee_wei": "42000000000000",
+          "transaction_type": 2,
+          "client_version": "anvil/v1.8.7"
+        }
+      },
+      "normalized_digest": "3be8fafd0bf120d17d18777e9ea98f66873dae9c9ffbf3a6e8f5fb42936fab59",
+      "reset_verified": true
+    }
+  ],
+  "reproducibility": {
+    "normalized_digests": [
+      "3be8fafd0bf120d17d18777e9ea98f66873dae9c9ffbf3a6e8f5fb42936fab59"
+    ],
+    "consistent": true,
+    "environment_specific_fields": [
+      "transaction_hash",
+      "block_hash",
+      "block_number",
+      "effective_gas_price_wei",
+      "fee_wei",
+      "transaction_type",
+      "client_version"
+    ],
+    "note": "Transaction and block hashes, block numbers, gas prices and fees depend on the node and its configuration, so they are recorded under environment_specific and never compared. The normalized observation holds only values fixed by the scenario; repeated runs must produce the same normalized digest."
+  }
+}

@@ -11,6 +11,7 @@ Commands:
 - ``verify``     re-check every invariant and audit the full event log
 - ``reset``      replace the saved world with a fresh day-0 world (asks first)
 - ``demo``       run a fresh world for 100 days in memory and print a summary
+- ``scenario``   list, validate and run Web3 learning scenarios (``genesis.harness.cli``)
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from genesis import __version__
+from genesis.harness.cli import register as register_scenario_commands
 from genesis.invariants import assert_invariants, audit_event_log, check_invariants
 from genesis.models import GenesisError, SimulationConfig
 from genesis.persistence import load_world, read_save_info, save_world
@@ -239,6 +241,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--seed", type=int, default=DEFAULT_SEED, help="random seed (default: %(default)s)")
     sub.add_argument("--residents", type=int, default=None, help="number of residents (default: 20)")
     sub.add_argument("--save", default=None, help="also save the resulting world to this file")
+
+    register_scenario_commands(commands)
     return parser
 
 

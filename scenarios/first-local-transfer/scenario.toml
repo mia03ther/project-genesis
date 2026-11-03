@@ -1,0 +1,117 @@
+# First Local Blockchain Transfer
+# A GENESIS scenario manifest. Format: docs/SCENARIO_FORMAT.md
+# Local only: every account and every unit of ether here exists only on a
+# throwaway Anvil development chain on this computer.
+
+manifest_version = 1
+
+[scenario]
+id = "first-local-transfer"
+version = "1.0.0"
+title = "First Local Blockchain Transfer"
+summary = """
+Send test ether from one account to another on a private development chain, \
+then read the transaction receipt and confirm exactly what changed."""
+difficulty = "beginner"
+estimated_minutes = 15
+learning_objectives = [
+    "Describe an account balance and convert between wei and ether",
+    "Send a plain value transfer from one account to another",
+    "Read a transaction receipt: its status, gas used and effective gas price",
+    "Explain why the sender's balance falls by the value plus the gas fee while the recipient gains exactly the value",
+    "Explain what an account nonce is and why it rises by one with each transaction",
+]
+prerequisites = [
+    "Know that a blockchain records transactions that change account balances",
+    "Be comfortable running commands in a terminal",
+]
+tags = ["evm", "transactions", "gas", "anvil", "local-only"]
+
+[environment]
+kind = "anvil"
+chain_id = 31337
+
+[[accounts]]
+label = "alice"
+address = "0x00000000000000000000000000000000000a11ce"
+balance = "10 ether"
+description = "Synthetic sender. It has no private key: the local chain impersonates it."
+
+[[accounts]]
+label = "bob"
+address = "0x0000000000000000000000000000000000000b0b"
+balance = "0 ether"
+description = "Synthetic recipient that starts with an empty balance."
+
+[transaction]
+from = "alice"
+to = "bob"
+value = "1.5 ether"
+gas_limit = 21000
+
+[grading]
+# Every point is needed to pass; three criteria are required on their own.
+pass_threshold = 13
+
+[[grading.criteria]]
+id = "transaction-succeeded"
+check = "receipt_status"
+expect = "success"
+points = 2
+required = true
+description = "The transaction was mined and its receipt status is 1 (success)."
+
+[[grading.criteria]]
+id = "sent-by-alice"
+check = "sender"
+points = 1
+description = "The transaction was sent from alice's address."
+
+[[grading.criteria]]
+id = "sent-to-bob"
+check = "recipient"
+points = 2
+required = true
+description = "The transaction was sent to bob's address."
+
+[[grading.criteria]]
+id = "exact-value"
+check = "value"
+points = 2
+required = true
+description = "The transaction carried exactly 1.5 ether (1500000000000000000 wei)."
+
+[[grading.criteria]]
+id = "bob-received-the-value"
+check = "final_balance"
+account = "bob"
+expect = "1.5 ether"
+points = 2
+description = "Bob's balance is exactly 1.5 ether: the recipient pays no gas."
+
+[[grading.criteria]]
+id = "alice-paid-value-and-fee"
+check = "sender_pays_value_and_fee"
+points = 2
+description = "Alice's balance fell by exactly the value plus gas used times the effective gas price."
+
+[[grading.criteria]]
+id = "plain-transfer-gas"
+check = "gas_used"
+expect = 21000
+points = 1
+description = "A plain transfer to an account without code uses 21,000 gas."
+
+[[grading.criteria]]
+id = "alice-nonce-increased"
+check = "nonce_increment"
+account = "alice"
+expect = 1
+points = 1
+description = "Alice's nonce rose by exactly one."
+
+[metadata]
+authors = ["Project GENESIS"]
+created = 2026-11-02
+networks = ["anvil-local"]
+notes = "Local only. Uses synthetic addresses and test ether on a throwaway development chain."

@@ -23,7 +23,7 @@ dev = ["pytest>=8"]
 genesis = "genesis.cli:main"
 
 [tool.setuptools]
-packages = ["genesis"]
+packages = ["genesis", "genesis.harness"]
 
 [tool.setuptools.dynamic]
 version = { attr = "genesis.__version__" }
@@ -32,3 +32,6 @@ version = { attr = "genesis.__version__" }
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra"
+markers = [
+    "anvil: integration tests that start a local Anvil node (requires Foundry; skipped when anvil is not on PATH)",
+]
