@@ -5,8 +5,13 @@ foundation: a small economy of 20 autonomous residents who produce, trade and
 consume food, wood and stone in a daily market. The engine is authoritative,
 every run is exactly reproducible from its seed, and the books always balance.
 
+Alongside it, the **scenario harness** (Phase 1) runs versioned Web3 learning
+scenarios on a private local Anvil chain and grades them deterministically. It
+starts with *First Local Blockchain Transfer*.
+
 It is written in plain Python 3.12 with only the standard library at runtime
-(SQLite included); `pytest` is the only development dependency.
+(SQLite included); `pytest` is the only development dependency. The harness
+additionally needs Foundry's `anvil` to run scenarios on a real local chain.
 
 ## Vision
 
@@ -112,6 +117,84 @@ python main.py demo --days 100 --seed 42      # in-memory demonstration
 
 `advance` refuses to save a world whose invariants fail, and `reset` and `init`
 refuse to touch any file that is not a GENESIS save.
+
+## Web3 scenario harness (Phase 1)
+
+A scenario is a versioned manifest under [`scenarios/`](scenarios): learning
+objectives, starting accounts, the expected transaction and grading criteria.
+The harness starts a private Anvil chain on `127.0.0.1`, puts it in the
+scenario's starting state, has an actor submit the transaction, grades the
+receipt and balances with a deterministic judge, writes a JSON report, and
+restores the starting state. Phase 1 contains one scenario and one actor (the
+scripted reference solution). There are no keys, wallets, public networks or
+model calls. See [docs/HARNESS_ARCHITECTURE.md](docs/HARNESS_ARCHITECTURE.md)
+for the design and [docs/SCENARIO_FORMAT.md](docs/SCENARIO_FORMAT.md) for the
+manifest and report formats.
+
+**Install Foundry (for `anvil`).** Per the [Foundry installation
+guide](https://getfoundry.sh/introduction/installation), `foundryup` runs in
+Git Bash or WSL, not in PowerShell or Command Prompt. In **Git Bash**:
+
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+```
+
+Restart Git Bash, then run `foundryup`. Alternatively, download a precompiled
+release from [github.com/foundry-rs/foundry/releases](https://github.com/foundry-rs/foundry/releases)
+(for Windows, `foundry_<version>_win32_amd64.zip`), check its SHA-256 against
+the `.sha256` file published next to it, and extract it into
+`%USERPROFILE%\.foundry\bin`, the folder `foundryup` uses. The harness was
+verified this second way, with Foundry v1.8.7.
+
+Put the folder on `PATH` for the current PowerShell session, then check:
+
+```powershell
+$env:Path = "$env:USERPROFILE\.foundry\bin;$env:Path"
+```
+
+```powershell
+anvil --version
+```
+
+To make it permanent, add `%USERPROFILE%\.foundry\bin` to your user `PATH` in
+Windows' environment-variable settings. Without `PATH`, pass the executable
+explicitly: `--anvil "$env:USERPROFILE\.foundry\bin\anvil.exe"`.
+
+**Use it** (from the repository root):
+
+```powershell
+.\.venv\Scripts\python.exe main.py scenario list
+.\.venv\Scripts\python.exe main.py scenario validate first-local-transfer
+.\.venv\Scripts\python.exe main.py scenario run first-local-transfer                      # writes reports\first-local-transfer.json
+.\.venv\Scripts\python.exe main.py scenario run first-local-transfer --repeat 3           # reset between runs, compare outcomes
+.\.venv\Scripts\python.exe main.py scenario run first-local-transfer --value "1 ether"    # a deliberate mistake: graded as failed
+Get-Content reports\first-local-transfer.json
+```
+
+The exit code is 0 only when the scenario passed; `failed` and `rejected` runs
+exit with 1. Without Foundry, `scenario run` stops with an `error` report that
+says what to install. [docs/examples/first-local-transfer.report.json](docs/examples/first-local-transfer.report.json)
+is a real report from Anvil 1.8.7.
+
+**Tests.** The harness's unit tests use an in-repository test double of the
+few Anvil RPC methods involved, served over real HTTP, so they run without
+Foundry. The integration tests start a real `anvil` and are skipped, with the
+reason printed, when it is not on `PATH`:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest                  # everything; Anvil tests skip if anvil is missing
+.\.venv\Scripts\python.exe -m pytest -m anvil         # only the real-Anvil integration tests
+.\.venv\Scripts\python.exe -m pytest -m "not anvil"   # everything except them
+```
+
+Verified on Windows 11 with Python 3.12.14 and Anvil 1.8.7: all three
+integration tests pass. Real Anvil and the test double produce the same
+normalized digest for the reference run, which a pinned test checks on both.
+
+**Anvil-local only.** Nothing has been run against Monad Testnet or any other
+public network, and no compatibility with them is claimed. A public test
+network needs real keys, faucet funds and permanent transactions, so it will
+get its own adapter and its own tests (see the architecture document).
 
 ## How it works
 
@@ -248,12 +331,16 @@ Each step builds on the engine's guarantees rather than bypassing them.
 2. **Agents:** language-model adapters behind the existing `Agent` protocol,
    with recorded replies for exact replay; agent memory; experiment tooling to
    compare policies.
-3. **Learning world:** levels and quests as scripted scenarios, a knowledge map,
+3. **Scenario harness:** more scenarios on the Phase 1 foundation (reading
+   receipts, contract calls, events); a learner interface that acts as an
+   `Actor`; a separate Monad Testnet adapter with its own key handling and
+   tests; optional AI-agent evaluation by adding model adapters as actors.
+4. **Learning world:** levels and quests as scripted scenarios, a knowledge map,
    and AI NPC mentors that explain what happens in the simulation.
-4. **Web3 layer:** simulated ledgers, tokens and contracts inside the sandbox,
+5. **Web3 layer:** simulated ledgers, tokens and contracts inside the sandbox,
    then interactive on-chain experiments on test networks, with security
    lessons built in.
-5. **Creation:** tools for players to build their own levels and economic worlds.
+6. **Creation:** tools for players to build their own levels and economic worlds.
 
 ## License
 
