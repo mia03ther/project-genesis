@@ -1,0 +1,171 @@
+{
+ "stage": "diagnosed",
+ "attempt": 1,
+ "evidence": [
+  {
+   "id": "authorized-intent",
+   "title": "Original authorized intent",
+   "kind": "authorization",
+   "summary": "What Alice approved, recorded before any request arrived.",
+   "requires": [],
+   "inspected": true,
+   "locked": false
+  },
+  {
+   "id": "payment-request",
+   "title": "Mock payment request",
+   "kind": "request",
+   "summary": "What the payments API sent to the wallet. Untrusted input.",
+   "requires": [],
+   "inspected": true,
+   "locked": false
+  },
+  {
+   "id": "transaction-draft",
+   "title": "Transaction parameters",
+   "kind": "transaction",
+   "summary": "The transfer the wallet would sign if it paid the request as received.",
+   "requires": [],
+   "inspected": true,
+   "locked": false
+  },
+  {
+   "id": "chain-accounts",
+   "title": "Chain evidence",
+   "kind": "chain",
+   "summary": "Live balances, nonces and code for every address in the case, read from the local chain.",
+   "requires": [],
+   "inspected": true,
+   "locked": false
+  },
+  {
+   "id": "field-comparison",
+   "title": "Field-by-field comparison",
+   "kind": "comparison",
+   "summary": "Each authorized field next to what the request asks for, compared exactly.",
+   "requires": [
+    "authorized-intent",
+    "payment-request"
+   ],
+   "inspected": true,
+   "locked": false
+  }
+ ],
+ "hints": {
+  "revealed": [
+   "Start with what Alice approved, then read the request. Is every field the same, or only most of them?"
+  ],
+  "total": 4
+ },
+ "choice": {
+  "id": "trust-api",
+  "label": "Pay the request as received"
+ },
+ "accounts": [
+  {
+   "label": "alice",
+   "address": "0x00000000000000000000000000000000000a11ce",
+   "preview": "0x0000...11ce",
+   "role": "payer",
+   "balance": {
+    "wei": "10000000000000000000",
+    "ether": "10 ether"
+   },
+   "nonce": 0
+  },
+  {
+   "label": "bob",
+   "address": "0x0000000000000000000000000000000000000b0b",
+   "preview": "0x0000...0b0b",
+   "role": "authorized recipient",
+   "balance": {
+    "wei": "0",
+    "ether": "0 ether"
+   },
+   "nonce": 0
+  },
+  {
+   "label": "unknown",
+   "address": "0x00000000000000000000000000000000000f0b0b",
+   "preview": "0x0000...0b0b",
+   "role": "not in the authorization",
+   "balance": {
+    "wei": "0",
+    "ether": "0 ether"
+   },
+   "nonce": 0
+  }
+ ],
+ "chain": {
+  "chain_id": 31337,
+  "block_number": 0,
+  "client_version": "anvil/v0.0.0-test-double"
+ },
+ "timeline": [
+  {
+   "seq": 1,
+   "attempt": 1,
+   "kind": "session-started",
+   "title": "Case opened",
+   "detail": "Starting balances: alice 10 ether, bob 0 ether, unknown 0 ether."
+  },
+  {
+   "seq": 2,
+   "attempt": 1,
+   "kind": "evidence-inspected",
+   "title": "Inspected: Original authorized intent",
+   "detail": "What Alice approved, recorded before any request arrived."
+  },
+  {
+   "seq": 3,
+   "attempt": 1,
+   "kind": "evidence-inspected",
+   "title": "Inspected: Mock payment request",
+   "detail": "What the payments API sent to the wallet. Untrusted input."
+  },
+  {
+   "seq": 4,
+   "attempt": 1,
+   "kind": "evidence-inspected",
+   "title": "Inspected: Transaction parameters",
+   "detail": "The transfer the wallet would sign if it paid the request as received."
+  },
+  {
+   "seq": 5,
+   "attempt": 1,
+   "kind": "evidence-inspected",
+   "title": "Inspected: Chain evidence",
+   "detail": "Live balances, nonces and code for every address in the case, read from the local chain."
+  },
+  {
+   "seq": 6,
+   "attempt": 1,
+   "kind": "evidence-inspected",
+   "title": "Inspected: Field-by-field comparison",
+   "detail": "Each authorized field next to what the request asks for, compared exactly."
+  },
+  {
+   "seq": 7,
+   "attempt": 1,
+   "kind": "hint-revealed",
+   "title": "Hint 1 of 4",
+   "detail": "Start with what Alice approved, then read the request. Is every field the same, or only most of them?"
+  },
+  {
+   "seq": 8,
+   "attempt": 1,
+   "kind": "strategy-chosen",
+   "title": "Strategy chosen: Pay the request as received",
+   "detail": "The payments API is Alice's own provider, so its request is authoritative."
+  }
+ ],
+ "result": null,
+ "history": [],
+ "allowed": {
+  "inspect": true,
+  "hint": true,
+  "choose": true,
+  "replay": true,
+  "reset": true
+ }
+}

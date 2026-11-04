@@ -23,3 +23,13 @@ htmlcov/
 genesis_report_day*.json
 genesis_*_day*.csv
 reports/
+
+# Frontend
+node_modules/
+
+# Solidity compiler output (source and tests remain tracked)
+contracts/**/out/
+contracts/**/cache/
+
+# Local IDE launch settings may contain machine-specific paths.
+.claude/launch.json

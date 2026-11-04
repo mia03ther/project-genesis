@@ -12,6 +12,7 @@ Commands:
 - ``reset``      replace the saved world with a fresh day-0 world (asks first)
 - ``demo``       run a fresh world for 100 days in memory and print a summary
 - ``scenario``   list, validate and run Web3 learning scenarios (``genesis.harness.cli``)
+- ``lab``        serve the Security Lab web UI and API (``genesis.lab``; needs the lab extra)
 """
 
 from __future__ import annotations
@@ -174,6 +175,18 @@ def cmd_demo(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_lab(args: argparse.Namespace) -> int:
+    # Imported lazily: the lab needs the optional FastAPI extra, the rest of the CLI does not.
+    from genesis.lab.__main__ import main as lab_main
+
+    argv = ["--host", args.host, "--port", str(args.port), "--anvil", args.anvil, "--scenarios", args.scenarios]
+    if args.rpc_url:
+        argv += ["--rpc-url", args.rpc_url]
+    if args.static:
+        argv += ["--static", args.static]
+    return lab_main(argv)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="genesis",
@@ -243,6 +256,14 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--save", default=None, help="also save the resulting world to this file")
 
     register_scenario_commands(commands)
+
+    sub = add("lab", cmd_lab, "serve the Security Lab (web UI and API) on a loopback address", with_db=False)
+    sub.add_argument("--host", default="127.0.0.1", help="loopback address to bind (default: %(default)s)")
+    sub.add_argument("--port", type=int, default=8000, help="port (default: %(default)s)")
+    sub.add_argument("--anvil", default="anvil", help="anvil executable (default: found on PATH)")
+    sub.add_argument("--rpc-url", default=None, help="use a running local Anvil node instead of starting one")
+    sub.add_argument("--scenarios", default="scenarios", help="scenario directory (default: %(default)s)")
+    sub.add_argument("--static", default=None, help="built frontend to serve (default: frontend/dist if built)")
     return parser
 
 

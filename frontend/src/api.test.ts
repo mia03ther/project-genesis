@@ -1,0 +1,4 @@
+import {describe,it,expect,vi,afterEach} from 'vitest';
+import {api} from './api';
+afterEach(()=>vi.unstubAllGlobals());
+describe('API contract',()=>{it('passes the strategy to the authoritative backend',async()=>{const request=vi.fn().mockResolvedValue({ok:true,json:async()=>({stage:'diagnosed'})});vi.stubGlobal('fetch',request);expect(await api('session/choice',{choice:'complete-fields'})).toEqual({stage:'diagnosed'});expect(request.mock.calls[0]?.[1].body).toBe('{"choice":"complete-fields"}')});it('surfaces backend rejection',async()=>{vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:false,status:409,json:async()=>({error:{message:'reset required'}})}));await expect(api('session/replay',{})).rejects.toThrow('reset required')});it('explains unavailable service',async()=>{vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:false,status:503,json:async()=>{throw Error()}}));await expect(api('session')).rejects.toThrow('503')})});

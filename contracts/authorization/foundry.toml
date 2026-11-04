@@ -1,0 +1,10 @@
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+cache_path = "cache"
+solc_version = "0.8.28"
+evm_version = "cancun"
+
+[fuzz]
+runs = 256

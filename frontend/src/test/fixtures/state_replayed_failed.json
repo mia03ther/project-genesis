@@ -1,0 +1,555 @@
+{
+ "stage": "replayed",
+ "attempt": 1,
+ "evidence": [
+  {
+   "id": "authorized-intent",
+   "title": "Original authorized intent",
+   "kind": "authorization",
+   "summary": "What Alice approved, recorded before any request arrived.",
+   "requires": [],
+   "inspected": true,
+   "locked": false
+  },
+  {
+   "id": "payment-request",
+   "title": "Mock payment request",
+   "kind": "request",
+   "summary": "What the payments API sent to the wallet. Untrusted input.",
+   "requires": [],
+   "inspected": true,
+   "locked": false
+  },
+  {
+   "id": "transaction-draft",
+   "title": "Transaction parameters",
+   "kind": "transaction",
+   "summary": "The transfer the wallet would sign if it paid the request as received.",
+   "requires": [],
+   "inspected": true,
+   "locked": false
+  },
+  {
+   "id": "chain-accounts",
+   "title": "Chain evidence",
+   "kind": "chain",
+   "summary": "Live balances, nonces and code for every address in the case, read from the local chain.",
+   "requires": [],
+   "inspected": true,
+   "locked": false
+  },
+  {
+   "id": "field-comparison",
+   "title": "Field-by-field comparison",
+   "kind": "comparison",
+   "summary": "Each authorized field next to what the request asks for, compared exactly.",
+   "requires": [
+    "authorized-intent",
+    "payment-request"
+   ],
+   "inspected": true,
+   "locked": false
+  }
+ ],
+ "hints": {
+  "revealed": [
+   "Start with what Alice approved, then read the request. Is every field the same, or only most of them?"
+  ],
+  "total": 4
+ },
+ "choice": {
+  "id": "trust-api",
+  "label": "Pay the request as received"
+ },
+ "accounts": [
+  {
+   "label": "alice",
+   "address": "0x00000000000000000000000000000000000a11ce",
+   "preview": "0x0000...11ce",
+   "role": "payer",
+   "balance": {
+    "wei": "10000000000000000000",
+    "ether": "10 ether"
+   },
+   "nonce": 0
+  },
+  {
+   "label": "bob",
+   "address": "0x0000000000000000000000000000000000000b0b",
+   "preview": "0x0000...0b0b",
+   "role": "authorized recipient",
+   "balance": {
+    "wei": "0",
+    "ether": "0 ether"
+   },
+   "nonce": 0
+  },
+  {
+   "label": "unknown",
+   "address": "0x00000000000000000000000000000000000f0b0b",
+   "preview": "0x0000...0b0b",
+   "role": "not in the authorization",
+   "balance": {
+    "wei": "0",
+    "ether": "0 ether"
+   },
+   "nonce": 0
+  }
+ ],
+ "chain": {
+  "chain_id": 31337,
+  "block_number": 0,
+  "client_version": "anvil/v0.0.0-test-double"
+ },
+ "timeline": [
+  {
+   "seq": 1,
+   "attempt": 1,
+   "kind": "session-started",
+   "title": "Case opened",
+   "detail": "Starting balances: alice 10 ether, bob 0 ether, unknown 0 ether."
+  },
+  {
+   "seq": 2,
+   "attempt": 1,
+   "kind": "evidence-inspected",
+   "title": "Inspected: Original authorized intent",
+   "detail": "What Alice approved, recorded before any request arrived."
+  },
+  {
+   "seq": 3,
+   "attempt": 1,
+   "kind": "evidence-inspected",
+   "title": "Inspected: Mock payment request",
+   "detail": "What the payments API sent to the wallet. Untrusted input."
+  },
+  {
+   "seq": 4,
+   "attempt": 1,
+   "kind": "evidence-inspected",
+   "title": "Inspected: Transaction parameters",
+   "detail": "The transfer the wallet would sign if it paid the request as received."
+  },
+  {
+   "seq": 5,
+   "attempt": 1,
+   "kind": "evidence-inspected",
+   "title": "Inspected: Chain evidence",
+   "detail": "Live balances, nonces and code for every address in the case, read from the local chain."
+  },
+  {
+   "seq": 6,
+   "attempt": 1,
+   "kind": "evidence-inspected",
+   "title": "Inspected: Field-by-field comparison",
+   "detail": "Each authorized field next to what the request asks for, compared exactly."
+  },
+  {
+   "seq": 7,
+   "attempt": 1,
+   "kind": "hint-revealed",
+   "title": "Hint 1 of 4",
+   "detail": "Start with what Alice approved, then read the request. Is every field the same, or only most of them?"
+  },
+  {
+   "seq": 8,
+   "attempt": 1,
+   "kind": "strategy-chosen",
+   "title": "Strategy chosen: Pay the request as received",
+   "detail": "The payments API is Alice's own provider, so its request is authoritative."
+  },
+  {
+   "seq": 9,
+   "attempt": 1,
+   "kind": "variant-replayed",
+   "title": "req-2041: paid -> passed",
+   "detail": "Mined in block 1: 1.5 ether to bob, tx 0xb63d9c038d... Chain reset to the snapshot afterwards."
+  },
+  {
+   "seq": 10,
+   "attempt": 1,
+   "kind": "variant-replayed",
+   "title": "req-2042: paid -> failed",
+   "detail": "Mined in block 1: 1.5 ether to unknown, tx 0x5483d7899a... Chain reset to the snapshot afterwards."
+  },
+  {
+   "seq": 11,
+   "attempt": 1,
+   "kind": "mission-failed",
+   "title": "Validation failed",
+   "detail": "The strategy failed on: wrong-recipient. Read the failed checks, reset, and try again."
+  }
+ ],
+ "result": {
+  "passed": false,
+  "attempt": 1,
+  "summary": "The strategy failed on: wrong-recipient. Read the failed checks, reset, and try again.",
+  "choice": {
+   "id": "trust-api",
+   "label": "Pay the request as received",
+   "detail": "The payments API is Alice's own provider, so its request is authoritative.",
+   "feedback": "Unsafe. An API response is untrusted input: whoever controls or compromises the API decides where the money goes. This strategy paid 1.5 ether to an address Alice never approved, and a mined transfer cannot be recalled."
+  },
+  "variants": [
+   {
+    "id": "authorized-request",
+    "title": "The request matches the authorization",
+    "description": "The payments API asks for exactly what Alice approved.",
+    "expect": "accept",
+    "request": {
+     "request_id": "req-2041",
+     "pay_to": {
+      "address": "0x0000000000000000000000000000000000000b0b",
+      "preview": "0x0000...0b0b"
+     },
+     "value": {
+      "wei": "1500000000000000000",
+      "ether": "1.5 ether"
+     },
+     "chain_id": 31337
+    },
+    "decision": {
+     "accepted": true,
+     "summary": "Paid as received: the request was trusted without comparing it to anything.",
+     "checks": []
+    },
+    "status": "passed",
+    "score": 15,
+    "max_score": 15,
+    "transaction": {
+     "hash": "0xb63d9c038d62698b13163d611ec4d4947807f50a43a137421d64444e2a38e09d",
+     "block_number": 1,
+     "from": {
+      "label": "alice",
+      "address": "0x00000000000000000000000000000000000a11ce",
+      "preview": "0x0000...11ce",
+      "role": "payer"
+     },
+     "to": {
+      "address": "0x0000000000000000000000000000000000000b0b",
+      "preview": "0x0000...0b0b",
+      "label": "bob"
+     },
+     "value": {
+      "wei": "1500000000000000000",
+      "ether": "1.5 ether"
+     },
+     "gas_used": 21000,
+     "effective_gas_price_wei": "1000000000",
+     "fee": {
+      "wei": "21000000000000",
+      "ether": "0.000021 ether"
+     },
+     "status": 1
+    },
+    "balances": [
+     {
+      "label": "alice",
+      "address": "0x00000000000000000000000000000000000a11ce",
+      "before": {
+       "wei": "10000000000000000000",
+       "ether": "10 ether"
+      },
+      "after": {
+       "wei": "8499979000000000000",
+       "ether": "8.499979 ether"
+      },
+      "change": {
+       "wei": "-1500021000000000000",
+       "ether": "-1.500021 ether"
+      }
+     },
+     {
+      "label": "bob",
+      "address": "0x0000000000000000000000000000000000000b0b",
+      "before": {
+       "wei": "0",
+       "ether": "0 ether"
+      },
+      "after": {
+       "wei": "1500000000000000000",
+       "ether": "1.5 ether"
+      },
+      "change": {
+       "wei": "1500000000000000000",
+       "ether": "1.5 ether"
+      }
+     },
+     {
+      "label": "unknown",
+      "address": "0x00000000000000000000000000000000000f0b0b",
+      "before": {
+       "wei": "0",
+       "ether": "0 ether"
+      },
+      "after": {
+       "wei": "0",
+       "ether": "0 ether"
+      },
+      "change": {
+       "wei": "0",
+       "ether": "0 ether"
+      }
+     }
+    ],
+    "criteria": [
+     {
+      "id": "correct-decision",
+      "check": "decision",
+      "description": "The request was paid if and only if it matches the authorization.",
+      "required": true,
+      "points": 3,
+      "awarded": 3,
+      "passed": true,
+      "expected": "accepted",
+      "actual": "accepted",
+      "explanation": "This request matches the authorization, so paying it was correct."
+     },
+     {
+      "id": "only-authorized-transfers",
+      "check": "authorized_transfer",
+      "description": "Whatever was executed went to bob, for 1.5 ether, on chain 31337: nothing else.",
+      "required": true,
+      "points": 3,
+      "awarded": 3,
+      "passed": true,
+      "expected": "1.5 ether from alice to bob (0x0000000000000000000000000000000000000b0b) on chain 31337, or nothing at all",
+      "actual": "1.5 ether from 0x00000000000000000000000000000000000a11ce (alice) to 0x0000000000000000000000000000000000000b0b (bob) on chain 31337",
+      "explanation": "The executed transfer matches the authorization: payer, recipient, value and chain."
+     },
+     {
+      "id": "payment-succeeded",
+      "check": "receipt_status",
+      "description": "The authorized payment was mined with receipt status 1.",
+      "required": true,
+      "points": 2,
+      "awarded": 2,
+      "passed": true,
+      "expected": "success (1)",
+      "actual": "success (1)",
+      "explanation": "The receipt status is 1: the transaction was executed and its effects are on chain."
+     },
+     {
+      "id": "paid-bob",
+      "check": "recipient",
+      "description": "The authorized payment went to bob's full address.",
+      "required": true,
+      "points": 2,
+      "awarded": 2,
+      "passed": true,
+      "expected": "0x0000000000000000000000000000000000000b0b (bob)",
+      "actual": "0x0000000000000000000000000000000000000b0b (bob)",
+      "explanation": "The transaction paid bob, the expected recipient."
+     },
+     {
+      "id": "paid-exact-amount",
+      "check": "value",
+      "description": "The authorized payment carried exactly 1.5 ether.",
+      "required": false,
+      "points": 1,
+      "awarded": 1,
+      "passed": true,
+      "expected": "1500000000000000000 wei (1.5 ether)",
+      "actual": "1500000000000000000 wei (1.5 ether)",
+      "explanation": "Exactly 1.5 ether was sent."
+     },
+     {
+      "id": "bob-received-it",
+      "check": "final_balance",
+      "description": "Bob ends with exactly 1.5 ether.",
+      "required": false,
+      "points": 2,
+      "awarded": 2,
+      "passed": true,
+      "expected": "bob: 1500000000000000000 wei (1.5 ether)",
+      "actual": "bob: 1500000000000000000 wei (1.5 ether)",
+      "explanation": "bob ends with exactly 1.5 ether."
+     },
+     {
+      "id": "alice-paid-value-and-fee",
+      "check": "sender_pays_value_and_fee",
+      "description": "Alice paid 1.5 ether plus the gas fee, to the wei.",
+      "required": false,
+      "points": 1,
+      "awarded": 1,
+      "passed": true,
+      "expected": "alice pays 1500021000000000000 wei (value 1500000000000000000 + fee 21000 gas x 1000000000 wei)",
+      "actual": "alice paid 1500021000000000000 wei",
+      "explanation": "alice paid the value plus a fee of 21000 gas x 1000000000 wei, to the wei."
+     },
+     {
+      "id": "alice-nonce-rose",
+      "check": "nonce_increment",
+      "description": "Alice signed exactly one transaction.",
+      "required": false,
+      "points": 1,
+      "awarded": 1,
+      "passed": true,
+      "expected": "alice: +1",
+      "actual": "alice: +1",
+      "explanation": "alice's nonce rose by 1: every transaction from an account uses up one nonce."
+     }
+    ],
+    "normalized_digest": "8771802e3818601be34887e2fe00c3bcf0eb0201150367601ed26d2f0830c0ac",
+    "reset_verified": true
+   },
+   {
+    "id": "wrong-recipient",
+    "title": "The request names a different recipient",
+    "description": "The payments API asks for the right amount on the right chain, but to an address Alice never approved.",
+    "expect": "reject",
+    "request": {
+     "request_id": "req-2042",
+     "pay_to": {
+      "address": "0x00000000000000000000000000000000000f0b0b",
+      "preview": "0x0000...0b0b"
+     },
+     "value": {
+      "wei": "1500000000000000000",
+      "ether": "1.5 ether"
+     },
+     "chain_id": 31337
+    },
+    "decision": {
+     "accepted": true,
+     "summary": "Paid as received: the request was trusted without comparing it to anything.",
+     "checks": []
+    },
+    "status": "failed",
+    "score": 0,
+    "max_score": 9,
+    "transaction": {
+     "hash": "0x5483d7899a8cf20d960894c2b192d5a73c64c2c12f4d70c49fc32fbc8d070ec8",
+     "block_number": 1,
+     "from": {
+      "label": "alice",
+      "address": "0x00000000000000000000000000000000000a11ce",
+      "preview": "0x0000...11ce",
+      "role": "payer"
+     },
+     "to": {
+      "address": "0x00000000000000000000000000000000000f0b0b",
+      "preview": "0x0000...0b0b",
+      "label": "unknown"
+     },
+     "value": {
+      "wei": "1500000000000000000",
+      "ether": "1.5 ether"
+     },
+     "gas_used": 21000,
+     "effective_gas_price_wei": "1000000000",
+     "fee": {
+      "wei": "21000000000000",
+      "ether": "0.000021 ether"
+     },
+     "status": 1
+    },
+    "balances": [
+     {
+      "label": "alice",
+      "address": "0x00000000000000000000000000000000000a11ce",
+      "before": {
+       "wei": "10000000000000000000",
+       "ether": "10 ether"
+      },
+      "after": {
+       "wei": "8499979000000000000",
+       "ether": "8.499979 ether"
+      },
+      "change": {
+       "wei": "-1500021000000000000",
+       "ether": "-1.500021 ether"
+      }
+     },
+     {
+      "label": "bob",
+      "address": "0x0000000000000000000000000000000000000b0b",
+      "before": {
+       "wei": "0",
+       "ether": "0 ether"
+      },
+      "after": {
+       "wei": "0",
+       "ether": "0 ether"
+      },
+      "change": {
+       "wei": "0",
+       "ether": "0 ether"
+      }
+     },
+     {
+      "label": "unknown",
+      "address": "0x00000000000000000000000000000000000f0b0b",
+      "before": {
+       "wei": "0",
+       "ether": "0 ether"
+      },
+      "after": {
+       "wei": "1500000000000000000",
+       "ether": "1.5 ether"
+      },
+      "change": {
+       "wei": "1500000000000000000",
+       "ether": "1.5 ether"
+      }
+     }
+    ],
+    "criteria": [
+     {
+      "id": "correct-decision",
+      "check": "decision",
+      "description": "The request was paid if and only if it matches the authorization.",
+      "required": true,
+      "points": 3,
+      "awarded": 0,
+      "passed": false,
+      "expected": "rejected",
+      "actual": "accepted",
+      "explanation": "This request does not match the authorization and should have been refused, but it was paid."
+     },
+     {
+      "id": "only-authorized-transfers",
+      "check": "authorized_transfer",
+      "description": "Whatever was executed went to bob, for 1.5 ether, on chain 31337: nothing else.",
+      "required": true,
+      "points": 3,
+      "awarded": 0,
+      "passed": false,
+      "expected": "1.5 ether from alice to bob (0x0000000000000000000000000000000000000b0b) on chain 31337, or nothing at all",
+      "actual": "1.5 ether from 0x00000000000000000000000000000000000a11ce (alice) to 0x00000000000000000000000000000000000f0b0b (unknown) on chain 31337",
+      "explanation": "The executed transfer broke the authorization: it paid 0x00000000000000000000000000000000000f0b0b instead of bob. The addresses differ at hex digit(s) 36 of 40. Both shorten to 0x0000...0b0b, so a shortened preview hides the difference."
+     },
+     {
+      "id": "nothing-moved",
+      "check": "balances_unchanged",
+      "description": "Refusing the mismatched request left every balance and nonce untouched.",
+      "required": true,
+      "points": 3,
+      "awarded": 0,
+      "passed": false,
+      "expected": "no change",
+      "actual": "alice -1.500021 ether; unknown +1.5 ether; alice nonce +1",
+      "explanation": "The chain changed: alice -1.500021 ether; unknown +1.5 ether; alice nonce +1."
+     }
+    ],
+    "normalized_digest": "a690a913dc32afe39c4df3136679c10a0d41b2a5d0b3a2a41dcbb03ab9157a1a",
+    "reset_verified": true
+   }
+  ]
+ },
+ "history": [
+  {
+   "attempt": 1,
+   "choice": "trust-api",
+   "label": "Pay the request as received",
+   "passed": false
+  }
+ ],
+ "allowed": {
+  "inspect": true,
+  "hint": true,
+  "choose": false,
+  "replay": false,
+  "reset": true
+ }
+}

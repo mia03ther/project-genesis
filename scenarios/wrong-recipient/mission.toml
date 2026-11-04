@@ -1,0 +1,117 @@
+# Mission content for the GENESIS Security Lab. The scenario it plays is
+# scenario.toml in this directory; execution and grading come from the harness.
+# Format: docs/SECURITY_LAB.md.
+
+mission_version = 1
+id = "the-wrong-recipient"
+scenario = "wrong-recipient"
+title = "The Wrong Recipient"
+tagline = "A payment request that looks right in the preview, and isn't."
+estimated_minutes = 10
+# The request the player investigates. Every variant is replayed at the end.
+featured_variant = "wrong-recipient"
+
+briefing = [
+    "Alice runs a small design studio. Yesterday she approved invoice INV-0042: 1.5 ether to Bob, the illustrator who drew her new logo.",
+    "This morning her payments service, a Web2 API, sent the wallet a payment request for that invoice. The amount is right, the memo is right, and the wallet preview shows a familiar-looking address.",
+    "Before anything is signed, find out whether this request really is the payment Alice approved, then choose how the wallet should validate requests like it and prove your choice with a replay on the local chain.",
+]
+
+objectives = [
+    "Read what Alice actually authorized",
+    "Inspect the mock payment request and the transaction it would produce",
+    "Check the chain evidence for every address involved",
+    "Choose a validation strategy and replay both requests on the local chain",
+]
+
+[trust_boundary]
+title = "Where trust changes hands"
+summary = "The authorization is the only thing Alice approved. Everything the API sends is a claim to be checked against it, and once a transaction is mined it cannot be taken back."
+disclaimer = "The payment request in this lab is an invented, simplified JSON message, loosely inspired by HTTP 402-style payment flows. It does not implement x402 or any other payment protocol, and nothing here touches a real network."
+steps = [
+    { actor = "Alice's approval", trust = "trusted", note = "Recorded intent: who, how much, which chain." },
+    { actor = "Payments API (Web2)", trust = "untrusted", note = "Sends a request. It can be wrong, stale or compromised." },
+    { actor = "Wallet validator", trust = "decision point", note = "The last moment a mismatch can be stopped." },
+    { actor = "Local chain (Anvil)", trust = "irreversible", note = "Once mined, the transfer cannot be undone." },
+]
+
+[[evidence]]
+id = "authorized-intent"
+title = "Original authorized intent"
+kind = "authorization"
+summary = "What Alice approved, recorded before any request arrived."
+
+[[evidence]]
+id = "payment-request"
+title = "Mock payment request"
+kind = "request"
+variant = "wrong-recipient"
+summary = "What the payments API sent to the wallet. Untrusted input."
+
+[[evidence]]
+id = "transaction-draft"
+title = "Transaction parameters"
+kind = "transaction"
+variant = "wrong-recipient"
+summary = "The transfer the wallet would sign if it paid the request as received."
+
+[[evidence]]
+id = "chain-accounts"
+title = "Chain evidence"
+kind = "chain"
+summary = "Live balances, nonces and code for every address in the case, read from the local chain."
+
+[[evidence]]
+id = "field-comparison"
+title = "Field-by-field comparison"
+kind = "comparison"
+variant = "wrong-recipient"
+requires = ["authorized-intent", "payment-request"]
+summary = "Each authorized field next to what the request asks for, compared exactly."
+
+[[hints]]
+text = "Start with what Alice approved, then read the request. Is every field the same, or only most of them?"
+
+[[hints]]
+text = "Wallet previews shorten addresses to the first and last few characters. Two different addresses can share both. Compare all 40 hex digits."
+
+[[hints]]
+text = "Open the chain evidence. Which account does the request's address belong to, and did Alice ever authorize it?"
+
+[[hints]]
+text = "A safe validator checks every authorized field exactly (recipient, amount and chain) and refuses on any mismatch before signing. It must still pay the request that does match."
+
+[[choices]]
+id = "trust-api"
+policy = "trust-api"
+label = "Pay the request as received"
+detail = "The payments API is Alice's own provider, so its request is authoritative."
+feedback = "Unsafe. An API response is untrusted input: whoever controls or compromises the API decides where the money goes. This strategy paid 1.5 ether to an address Alice never approved, and a mined transfer cannot be recalled."
+
+[[choices]]
+id = "preview-match"
+policy = "preview-match"
+label = "Approve when the wallet preview matches"
+detail = "Compare the shortened address the wallet shows, plus the amount."
+feedback = "Unsafe. Bob's address and the unknown address both shorten to 0x0000...0b0b, so the preview check passed and the money went to the wrong account. Shortened addresses help you read; they do not verify anything."
+
+[[choices]]
+id = "amount-and-network"
+policy = "amount-and-network"
+label = "Check the amount and the network"
+detail = "Pay if the amount and the chain id match the invoice."
+feedback = "Unsafe. The amount and the chain were right, which is exactly why the request looked plausible, but the recipient was never checked, so the payment went to an unauthorized address."
+
+[[choices]]
+id = "exact-intent-match"
+policy = "exact-intent-match"
+label = "Validate every field against the authorization"
+detail = "Pay only if recipient, amount and chain id exactly equal what Alice authorized; refuse on any mismatch."
+feedback = "Safe. The matching request was paid to Bob, and the mismatched one was refused before anything was signed, leaving every balance untouched. The authorization, not the API, decides."
+
+[[choices]]
+id = "refuse-all"
+policy = "refuse-all"
+label = "Refuse every API payment request"
+detail = "Never pay requests from the API; settle invoices some other way."
+feedback = "Safe, but it does not do the job: Bob's correct request was refused too, so the invoice is still unpaid. Good validation stops the bad request and lets the good one through."

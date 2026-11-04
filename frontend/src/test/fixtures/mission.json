@@ -1,0 +1,88 @@
+{
+ "id": "the-wrong-recipient",
+ "title": "The Wrong Recipient",
+ "tagline": "A payment request that looks right in the preview, and isn't.",
+ "estimated_minutes": 10,
+ "briefing": [
+  "Alice runs a small design studio. Yesterday she approved invoice INV-0042: 1.5 ether to Bob, the illustrator who drew her new logo.",
+  "This morning her payments service, a Web2 API, sent the wallet a payment request for that invoice. The amount is right, the memo is right, and the wallet preview shows a familiar-looking address.",
+  "Before anything is signed, find out whether this request really is the payment Alice approved, then choose how the wallet should validate requests like it and prove your choice with a replay on the local chain."
+ ],
+ "objectives": [
+  "Read what Alice actually authorized",
+  "Inspect the mock payment request and the transaction it would produce",
+  "Check the chain evidence for every address involved",
+  "Choose a validation strategy and replay both requests on the local chain"
+ ],
+ "trust_boundary": {
+  "title": "Where trust changes hands",
+  "summary": "The authorization is the only thing Alice approved. Everything the API sends is a claim to be checked against it, and once a transaction is mined it cannot be taken back.",
+  "disclaimer": "The payment request in this lab is an invented, simplified JSON message, loosely inspired by HTTP 402-style payment flows. It does not implement x402 or any other payment protocol, and nothing here touches a real network.",
+  "steps": [
+   {
+    "actor": "Alice's approval",
+    "trust": "trusted",
+    "note": "Recorded intent: who, how much, which chain."
+   },
+   {
+    "actor": "Payments API (Web2)",
+    "trust": "untrusted",
+    "note": "Sends a request. It can be wrong, stale or compromised."
+   },
+   {
+    "actor": "Wallet validator",
+    "trust": "decision point",
+    "note": "The last moment a mismatch can be stopped."
+   },
+   {
+    "actor": "Local chain (Anvil)",
+    "trust": "irreversible",
+    "note": "Once mined, the transfer cannot be undone."
+   }
+  ]
+ },
+ "choices": [
+  {
+   "id": "trust-api",
+   "label": "Pay the request as received",
+   "detail": "The payments API is Alice's own provider, so its request is authoritative."
+  },
+  {
+   "id": "preview-match",
+   "label": "Approve when the wallet preview matches",
+   "detail": "Compare the shortened address the wallet shows, plus the amount."
+  },
+  {
+   "id": "amount-and-network",
+   "label": "Check the amount and the network",
+   "detail": "Pay if the amount and the chain id match the invoice."
+  },
+  {
+   "id": "exact-intent-match",
+   "label": "Validate every field against the authorization",
+   "detail": "Pay only if recipient, amount and chain id exactly equal what Alice authorized; refuse on any mismatch."
+  },
+  {
+   "id": "refuse-all",
+   "label": "Refuse every API payment request",
+   "detail": "Never pay requests from the API; settle invoices some other way."
+  }
+ ],
+ "hints_total": 4,
+ "scenario": {
+  "id": "wrong-recipient",
+  "version": "1.0.0",
+  "title": "The Wrong Recipient",
+  "manifest_digest": "1d9ec9c36403f2f8568ab1e8c5cc5098a6640b7e1bbc7353e2e7b76975ec327e",
+  "variants": [
+   {
+    "id": "authorized-request",
+    "title": "The request matches the authorization"
+   },
+   {
+    "id": "wrong-recipient",
+    "title": "The request names a different recipient"
+   }
+  ]
+ }
+}

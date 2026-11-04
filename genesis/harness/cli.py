@@ -18,6 +18,7 @@ from genesis.harness.runner import (
     ScriptedActor,
     Submission,
     run_scenario,
+    run_variants,
     write_report,
 )
 from genesis.harness.units import describe_wei, format_wei, parse_amount
@@ -73,8 +74,18 @@ def cmd_validate(args: argparse.Namespace) -> int:
         )
     print(f"  transaction  {transfer.sender} -> {transfer.recipient}: {describe_wei(transfer.value)}, "
           f"gas limit {transfer.gas_limit}")  # fmt: skip
-    print(f"  grading      {len(manifest.grading.criteria)} criteria, {manifest.grading.max_score} points, "
-          f"pass at {manifest.grading.pass_threshold}")  # fmt: skip
+    authorization = manifest.authorization
+    if authorization is not None:
+        print(f"  authorized   {authorization.reference}: {authorization.payer} -> {authorization.recipient}, "
+              f"{format_wei(authorization.value)} on chain {authorization.chain_id}")  # fmt: skip
+        for variant in manifest.variants:
+            criteria = manifest.criteria_for(variant.id)
+            payee = manifest.label_of(variant.request.pay_to)
+            print(f"  variant      {variant.id:<20} expect {variant.expect:<7} pays {payee}, "
+                  f"{len(criteria)} criteria, {sum(c.points for c in criteria)} points")  # fmt: skip
+    else:
+        print(f"  grading      {len(manifest.grading.criteria)} criteria, {manifest.grading.max_score} points, "
+              f"pass at {manifest.grading.pass_threshold}")  # fmt: skip
     print(f"  digest       {manifest.digest()}")
     return 0
 
@@ -100,17 +111,51 @@ def cmd_run(args: argparse.Namespace) -> int:
     if args.repeat < 1:
         print("error: --repeat must be at least 1")
         return 1
-    report = run_scenario(
-        manifest,
-        actor=_actor(args, manifest),
-        repeat=args.repeat,
-        rpc_url=args.rpc_url,
-        anvil_executable=args.anvil,
-    )
+    if manifest.variants:
+        if args.sender is not None or args.to is not None or args.value is not None:
+            print("error: --from, --to and --value apply only to version 1 scenarios")
+            return 1
+        report = run_variants(manifest, repeat=args.repeat, rpc_url=args.rpc_url, anvil_executable=args.anvil)
+    else:
+        report = run_scenario(
+            manifest,
+            actor=_actor(args, manifest),
+            repeat=args.repeat,
+            rpc_url=args.rpc_url,
+            anvil_executable=args.anvil,
+        )
     path = write_report(report, args.report or Path("reports") / f"{manifest.scenario.id}.json")
-    print(render_report(report))
+    print(render_variants_report(report) if "variants" in report else render_report(report))
     print(f"Report written to {path}")
     return 0 if report["status"] == "passed" else 1
+
+
+def render_variants_report(report: Mapping[str, Any]) -> str:
+    """Text summary of a version 2 (variants) report."""
+    scenario = report["scenario"]
+    lines = [f"Scenario {scenario['id']} v{scenario['version']}: {str(report['status']).upper()}"]
+    environment = report["environment"]
+    if environment.get("client_version"):
+        lines.append(
+            f"  node: {environment['client_version']} at {environment['rpc_url']} (chain {environment['chain_id']})"
+        )
+    if report["error"]:
+        lines.append(f"  error: {report['error']}")
+    for result in report["variants"]:
+        decision = "accepted" if result["decision"]["accepted"] else "refused"
+        lines.append(
+            f"  {result['variant']} (repeat {result['repeat']}, expect {result['expect']}): "
+            f"{decision} by {result['decision']['decided_by']} -> {result['status']}"
+        )
+        for criterion in result["grading"]["criteria"]:
+            mark = "PASS" if criterion["passed"] else "FAIL"
+            lines.append(f"    [{mark}] {criterion['id']} ({criterion['awarded']}/{criterion['points']})")
+            if not criterion["passed"]:
+                lines.append(f"           {criterion['explanation']}")
+        lines.append(f"    normalized digest {result['normalized_digest'][:16]}, reset verified: {result['reset_verified']}")
+    if report["summary"]["runs"] > len(report["reproducibility"]["normalized_digests"]):
+        lines.append(f"  repeated runs consistent: {report['reproducibility']['consistent']}")
+    return "\n".join(lines)
 
 
 def render_report(report: Mapping[str, Any]) -> str:

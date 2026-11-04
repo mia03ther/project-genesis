@@ -1,0 +1,171 @@
+{
+ "authorized-intent": {
+  "id": "authorized-intent",
+  "title": "Original authorized intent",
+  "kind": "authorization",
+  "summary": "What Alice approved, recorded before any request arrived.",
+  "content": {
+   "reference": "INV-0042",
+   "description": "Alice approved one payment of 1.5 ether to Bob for invoice INV-0042 (logo design), on chain 31337.",
+   "payer": {
+    "label": "alice",
+    "address": "0x00000000000000000000000000000000000a11ce",
+    "preview": "0x0000...11ce",
+    "role": "payer"
+   },
+   "recipient": {
+    "label": "bob",
+    "address": "0x0000000000000000000000000000000000000b0b",
+    "preview": "0x0000...0b0b",
+    "role": "authorized recipient"
+   },
+   "value": {
+    "wei": "1500000000000000000",
+    "ether": "1.5 ether"
+   },
+   "chain_id": 31337
+  }
+ },
+ "payment-request": {
+  "id": "payment-request",
+  "title": "Mock payment request",
+  "kind": "request",
+  "summary": "What the payments API sent to the wallet. Untrusted input.",
+  "content": {
+   "source": "mock payments API (simulated, local)",
+   "request_id": "req-2042",
+   "pay_to": {
+    "address": "0x00000000000000000000000000000000000f0b0b",
+    "preview": "0x0000...0b0b"
+   },
+   "value": {
+    "wei": "1500000000000000000",
+    "ether": "1.5 ether"
+   },
+   "chain_id": 31337,
+   "memo": "INV-0042 logo design",
+   "raw": {
+    "request_id": "req-2042",
+    "pay_to": "0x00000000000000000000000000000000000f0b0b",
+    "amount": "1.5 ether",
+    "chain_id": 31337,
+    "memo": "INV-0042 logo design"
+   }
+  }
+ },
+ "transaction-draft": {
+  "id": "transaction-draft",
+  "title": "Transaction parameters",
+  "kind": "transaction",
+  "summary": "The transfer the wallet would sign if it paid the request as received.",
+  "content": {
+   "from": {
+    "label": "alice",
+    "address": "0x00000000000000000000000000000000000a11ce",
+    "preview": "0x0000...11ce",
+    "role": "payer"
+   },
+   "to": {
+    "address": "0x00000000000000000000000000000000000f0b0b",
+    "preview": "0x0000...0b0b"
+   },
+   "value": {
+    "wei": "1500000000000000000",
+    "ether": "1.5 ether"
+   },
+   "chain_id": 31337,
+   "gas_limit": 21000,
+   "wallet_preview": "Send 1.5 ether to 0x0000...0b0b",
+   "note": "A draft built from the request. Nothing has been signed or sent."
+  }
+ },
+ "chain-accounts": {
+  "id": "chain-accounts",
+  "title": "Chain evidence",
+  "kind": "chain",
+  "summary": "Live balances, nonces and code for every address in the case, read from the local chain.",
+  "content": {
+   "chain_id": 31337,
+   "block_number": 0,
+   "accounts": [
+    {
+     "label": "alice",
+     "address": "0x00000000000000000000000000000000000a11ce",
+     "preview": "0x0000...11ce",
+     "role": "payer",
+     "balance": {
+      "wei": "10000000000000000000",
+      "ether": "10 ether"
+     },
+     "nonce": 0,
+     "has_code": false,
+     "paid_by_request": false
+    },
+    {
+     "label": "bob",
+     "address": "0x0000000000000000000000000000000000000b0b",
+     "preview": "0x0000...0b0b",
+     "role": "authorized recipient",
+     "balance": {
+      "wei": "0",
+      "ether": "0 ether"
+     },
+     "nonce": 0,
+     "has_code": false,
+     "paid_by_request": false
+    },
+    {
+     "label": "unknown",
+     "address": "0x00000000000000000000000000000000000f0b0b",
+     "preview": "0x0000...0b0b",
+     "role": "not in the authorization",
+     "balance": {
+      "wei": "0",
+      "ether": "0 ether"
+     },
+     "nonce": 0,
+     "has_code": false,
+     "paid_by_request": true
+    }
+   ],
+   "client_version": "anvil/v0.0.0-test-double"
+  }
+ },
+ "field-comparison": {
+  "id": "field-comparison",
+  "title": "Field-by-field comparison",
+  "kind": "comparison",
+  "summary": "Each authorized field next to what the request asks for, compared exactly.",
+  "content": {
+   "fields": [
+    {
+     "field": "recipient",
+     "passed": false,
+     "authorized": "0x0000000000000000000000000000000000000b0b (bob)",
+     "requested": "0x00000000000000000000000000000000000f0b0b",
+     "explanation": "The request pays an address that is not bob. The addresses differ at hex digit(s) 36 of 40. Both shorten to 0x0000...0b0b, so a shortened preview hides the difference.",
+     "differing_positions": [
+      36
+     ]
+    },
+    {
+     "field": "value",
+     "passed": true,
+     "authorized": "1.5 ether",
+     "requested": "1.5 ether",
+     "explanation": "The amount matches the authorization.",
+     "differing_positions": []
+    },
+    {
+     "field": "chain_id",
+     "passed": true,
+     "authorized": "31337",
+     "requested": "31337",
+     "explanation": "The request targets the authorized chain.",
+     "differing_positions": []
+    }
+   ],
+   "all_match": false
+  }
+ }
+}

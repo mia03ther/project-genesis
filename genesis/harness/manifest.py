@@ -23,11 +23,13 @@ from typing import Any, Literal
 from genesis.harness.units import parse_amount
 from genesis.models import GenesisError, is_int
 
-MANIFEST_VERSION = 1
-SUPPORTED_MANIFEST_VERSIONS = (1,)
+#: The newest manifest format. Version 2 adds an authorization and scenario variants.
+MANIFEST_VERSION = 2
+SUPPORTED_MANIFEST_VERSIONS = (1, 2)
 ENVIRONMENT_KINDS = ("anvil",)
 DIFFICULTIES = ("beginner", "intermediate", "advanced")
 RECEIPT_STATUSES = ("success", "reverted")
+VARIANT_EXPECTATIONS = ("accept", "reject")
 MANIFEST_FILENAMES = ("scenario.toml", "scenario.json")
 
 SIMPLE_TRANSFER_GAS = 21_000
@@ -64,6 +66,8 @@ class CheckSpec:
     expect: Literal["no", "amount", "int", "status"] = "no"
     expect_required: bool = False
     default_expect: int | str | None = None
+    #: The first manifest version whose scenarios may use the check.
+    since: int = 1
 
 
 CHECKS: Mapping[str, CheckSpec] = MappingProxyType(
@@ -90,6 +94,12 @@ CHECKS: Mapping[str, CheckSpec] = MappingProxyType(
             expect="int",
             default_expect=1,
         ),
+        "decision": CheckSpec("the request was accepted or rejected as the variant expects", since=2),
+        "authorized_transfer": CheckSpec(
+            "any executed transfer matches the authorization exactly: payer, recipient, value and chain",
+            since=2,
+        ),
+        "balances_unchanged": CheckSpec("no scenario account's balance or nonce changed", since=2),
     }
 )
 
@@ -147,6 +157,50 @@ class Criterion:
     required: bool
     account: str | None = None
     expect: int | str | None = None
+    #: The variants the criterion applies to; empty means every variant (manifest version 2).
+    variants: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class AuthorizationSpec:
+    """What the payer actually approved: the source of truth a payment request is checked against."""
+
+    reference: str
+    description: str
+    #: Account labels.
+    payer: str
+    recipient: str
+    #: Wei.
+    value: int
+    chain_id: int
+
+
+@dataclass(frozen=True, slots=True)
+class PaymentRequest:
+    """An untrusted request to pay, in the shape a Web2 API might deliver it.
+
+    It is a simplified, invented format for teaching. It is *not* an
+    implementation of x402 or of any other payment protocol.
+    """
+
+    request_id: str
+    #: Lower-case address; always one of the scenario's accounts.
+    pay_to: str
+    value: int
+    chain_id: int
+    memo: str
+
+
+@dataclass(frozen=True, slots=True)
+class VariantSpec:
+    """One version of the scenario: the same chain and authorization, a different request."""
+
+    id: str
+    title: str
+    description: str
+    request: PaymentRequest
+    #: ``"accept"`` or ``"reject"``: what a correct validator does with the request.
+    expect: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -168,6 +222,9 @@ class ScenarioManifest:
     transaction: TransferSpec
     grading: GradingSpec
     metadata: Mapping[str, Any]
+    #: Present exactly when ``manifest_version >= 2``.
+    authorization: AuthorizationSpec | None = None
+    variants: tuple[VariantSpec, ...] = ()
     #: Where the manifest was loaded from; not part of its identity or digest.
     source: str | None = field(default=None, compare=False)
 
@@ -176,6 +233,16 @@ class ScenarioManifest:
             if account.label == label:
                 return account
         raise KeyError(f"scenario {self.scenario.id!r} has no account {label!r}")
+
+    def variant(self, variant_id: str) -> VariantSpec:
+        for variant in self.variants:
+            if variant.id == variant_id:
+                return variant
+        raise KeyError(f"scenario {self.scenario.id!r} has no variant {variant_id!r}")
+
+    def criteria_for(self, variant_id: str) -> tuple[Criterion, ...]:
+        """The criteria that apply to one variant, in manifest order."""
+        return tuple(c for c in self.grading.criteria if not c.variants or variant_id in c.variants)
 
     def label_of(self, address: str | None) -> str | None:
         """The label of an address, or ``None`` if it is not a scenario account."""
@@ -187,7 +254,43 @@ class ScenarioManifest:
         return None
 
     def to_dict(self) -> dict[str, Any]:
-        """Canonical, JSON-ready form. Wei amounts are decimal strings."""
+        """Canonical, JSON-ready form. Wei amounts are decimal strings.
+
+        Version 1 manifests produce exactly the form they always did, so their
+        digests are unchanged; version 2 adds its own sections.
+        """
+        result = self._base_dict()
+        if self.manifest_version >= 2 and self.authorization is not None:
+            auth = self.authorization
+            result["authorization"] = {
+                "reference": auth.reference,
+                "description": auth.description,
+                "payer": auth.payer,
+                "recipient": auth.recipient,
+                "value_wei": str(auth.value),
+                "chain_id": auth.chain_id,
+            }
+            result["variants"] = [
+                {
+                    "id": v.id,
+                    "title": v.title,
+                    "description": v.description,
+                    "expect": v.expect,
+                    "request": {
+                        "request_id": v.request.request_id,
+                        "pay_to": v.request.pay_to,
+                        "value_wei": str(v.request.value),
+                        "chain_id": v.request.chain_id,
+                        "memo": v.request.memo,
+                    },
+                }
+                for v in self.variants
+            ]
+            for criterion, entry in zip(self.grading.criteria, result["grading"]["criteria"], strict=True):
+                entry["variants"] = list(criterion.variants)
+        return result
+
+    def _base_dict(self) -> dict[str, Any]:
         return {
             "manifest_version": self.manifest_version,
             "scenario": {
@@ -378,25 +481,38 @@ def parse_manifest(data: object, *, source: str | None = None) -> ScenarioManife
         )
 
     errors = _Errors()
+    manifest_version = int(version)
     required = {"manifest_version", "scenario", "environment", "accounts", "transaction", "grading"}
+    if manifest_version >= 2:
+        required |= {"authorization", "variants"}
     _fields(data, "manifest", errors, required, {"metadata"})
     scenario = _parse_scenario(data.get("scenario"), errors)
     environment = _parse_environment(data.get("environment"), errors)
     accounts = _parse_accounts(data.get("accounts"), errors)
     labels = {account.label: account for account in accounts}
     transaction = _parse_transaction(data.get("transaction"), labels, errors)
-    grading = _parse_grading(data.get("grading"), labels, transaction, errors)
+    authorization: AuthorizationSpec | None = None
+    variants: tuple[VariantSpec, ...] = ()
+    if manifest_version >= 2:
+        authorization = _parse_authorization(data.get("authorization"), labels, environment, errors)
+        variants = _parse_variants(data.get("variants"), accounts, errors)
+        _check_reference_transaction(transaction, authorization, errors)
+    grading = _parse_grading(
+        data.get("grading"), labels, transaction, errors, manifest_version, {v.id for v in variants}
+    )
     metadata = _parse_metadata(data.get("metadata", {}), errors)
     if errors.items or scenario is None or environment is None or transaction is None or grading is None:
         raise ManifestError(errors.items or ["the manifest is incomplete"], source)
     return ScenarioManifest(
-        manifest_version=int(version),
+        manifest_version=manifest_version,
         scenario=scenario,
         environment=environment,
         accounts=accounts,
         transaction=transaction,
         grading=grading,
         metadata=MappingProxyType(metadata),
+        authorization=authorization,
+        variants=variants,
         source=source,
     )
 
@@ -444,7 +560,7 @@ def _parse_environment(raw: object, errors: _Errors) -> EnvironmentSpec | None:
     _fields(table, "environment", errors, {"kind", "chain_id"}, set())
     kind = _text(table, "kind", "environment", errors)
     if kind is not None and kind not in ENVIRONMENT_KINDS:
-        errors.add("environment.kind", f"{kind!r} is not supported; manifest version 1 knows only 'anvil'")
+        errors.add("environment.kind", f"{kind!r} is not supported; only 'anvil' (a local chain) is known")
         kind = None
     chain_id = _integer(table, "chain_id", "environment", errors, 1, 2**63 - 1)
     if kind is None or chain_id is None:
@@ -514,11 +630,15 @@ def _parse_transaction(
 
 
 def _parse_grading(raw: object, labels: Mapping[str, AccountSpec], transaction: TransferSpec | None,
-                   errors: _Errors) -> GradingSpec | None:  # fmt: skip
+                   errors: _Errors, manifest_version: int = 1,
+                   variant_ids: set[str] | None = None) -> GradingSpec | None:  # fmt: skip
     table = _table(raw, "grading", errors)
     if table is None:
         return None
-    _fields(table, "grading", errors, {"criteria"}, {"pass_threshold"})
+    # In version 2 a variant passes only when every criterion that applies to it passes,
+    # so there is no threshold to configure.
+    optional = {"pass_threshold"} if manifest_version == 1 else set()
+    _fields(table, "grading", errors, {"criteria"}, optional)
     raw_criteria = table.get("criteria")
     if not isinstance(raw_criteria, list) or not all(isinstance(item, Mapping) for item in raw_criteria):
         errors.add("grading.criteria", "must be a list of tables ([[grading.criteria]] in TOML)")
@@ -528,7 +648,9 @@ def _parse_grading(raw: object, labels: Mapping[str, AccountSpec], transaction: 
     criteria: list[Criterion] = []
     seen: set[str] = set()
     for index, item in enumerate(raw_criteria):
-        criterion = _parse_criterion(item, f"grading.criteria[{index}]", labels, transaction, errors)
+        criterion = _parse_criterion(
+            item, f"grading.criteria[{index}]", labels, transaction, errors, manifest_version, variant_ids
+        )
         if criterion is None:
             continue
         if criterion.id in seen:
@@ -545,8 +667,12 @@ def _parse_grading(raw: object, labels: Mapping[str, AccountSpec], transaction: 
 
 
 def _parse_criterion(table: Mapping[str, Any], path: str, labels: Mapping[str, AccountSpec],
-                     transaction: TransferSpec | None, errors: _Errors) -> Criterion | None:  # fmt: skip
-    _fields(table, path, errors, {"id", "check", "description"}, {"points", "required", "account", "expect"})
+                     transaction: TransferSpec | None, errors: _Errors, manifest_version: int = 1,
+                     variant_ids: set[str] | None = None) -> Criterion | None:  # fmt: skip
+    optional = {"points", "required", "account", "expect"}
+    if manifest_version >= 2:
+        optional.add("variants")
+    _fields(table, path, errors, {"id", "check", "description"}, optional)
     criterion_id = _text(table, "id", path, errors, _SLUG)
     check = _text(table, "check", path, errors)
     description = _text(table, "description", path, errors)
@@ -560,6 +686,13 @@ def _parse_criterion(table: Mapping[str, Any], path: str, labels: Mapping[str, A
     if spec is None:
         errors.add(f"{path}.check", f"unknown check {check!r}; known checks: {', '.join(CHECKS)}")
         return None
+    if spec.since > manifest_version:
+        errors.add(f"{path}.check", f"check {check!r} needs manifest_version {spec.since} or later")
+        return None
+    variants = _strings(table, "variants", path, errors, non_empty=True) if "variants" in table else ()
+    for name in variants:
+        if name not in (variant_ids or set()):
+            errors.add(f"{path}.variants", f"{name!r} is not one of the scenario's variants")
 
     account: str | None = None
     if spec.account == "no":
@@ -592,7 +725,99 @@ def _parse_criterion(table: Mapping[str, Any], path: str, labels: Mapping[str, A
 
     if criterion_id is None or description is None or points is None or not isinstance(required, bool):
         return None
-    return Criterion(criterion_id, check, description, points, required, account, expect)
+    return Criterion(criterion_id, check, description, points, required, account, expect, variants)
+
+
+def _parse_authorization(raw: object, labels: Mapping[str, AccountSpec], environment: EnvironmentSpec | None,
+                         errors: _Errors) -> AuthorizationSpec | None:  # fmt: skip
+    table = _table(raw, "authorization", errors)
+    if table is None:
+        return None
+    required = {"reference", "description", "payer", "recipient", "value", "chain_id"}
+    _fields(table, "authorization", errors, required, set())
+    reference = _text(table, "reference", "authorization", errors)
+    description = _text(table, "description", "authorization", errors)
+    payer = _text(table, "payer", "authorization", errors)
+    recipient = _text(table, "recipient", "authorization", errors)
+    value = _amount(table, "value", "authorization", errors)
+    chain_id = _integer(table, "chain_id", "authorization", errors, 1, 2**63 - 1)
+    for key, label in (("payer", payer), ("recipient", recipient)):
+        if label is not None and label not in labels:
+            errors.add(f"authorization.{key}", f"{label!r} is not one of the scenario's accounts")
+    if payer is not None and payer == recipient:
+        errors.add("authorization.recipient", "must differ from authorization.payer")
+    if value == 0:
+        errors.add("authorization.value", "must be more than zero")
+    if environment is not None and chain_id is not None and chain_id != environment.chain_id:
+        errors.add("authorization.chain_id", f"must equal environment.chain_id ({environment.chain_id})")
+    if reference is None or description is None or payer is None or recipient is None:
+        return None
+    if value is None or chain_id is None:
+        return None
+    return AuthorizationSpec(reference, " ".join(description.split()), payer, recipient, value, chain_id)
+
+
+def _parse_variants(raw: object, accounts: Sequence[AccountSpec], errors: _Errors) -> tuple[VariantSpec, ...]:
+    if raw is None:
+        errors.add("variants", "is required")
+        return ()
+    if not isinstance(raw, list) or not all(isinstance(item, Mapping) for item in raw):
+        errors.add("variants", "must be a list of tables ([[variants]] in TOML)")
+        return ()
+    if not 1 <= len(raw) <= 8:
+        errors.add("variants", f"must list 1 to 8 variants, got {len(raw)}")
+    addresses = {account.address for account in accounts}
+    variants: list[VariantSpec] = []
+    seen: set[str] = set()
+    for index, table in enumerate(raw):
+        path = f"variants[{index}]"
+        _fields(table, path, errors, {"id", "title", "description", "expect", "request"}, set())
+        variant_id = _text(table, "id", path, errors, _SLUG)
+        title = _text(table, "title", path, errors)
+        description = _text(table, "description", path, errors)
+        expect = _text(table, "expect", path, errors)
+        if expect is not None and expect not in VARIANT_EXPECTATIONS:
+            errors.add(f"{path}.expect", f"must be one of {', '.join(VARIANT_EXPECTATIONS)}")
+            expect = None
+        if variant_id is not None:
+            if variant_id in seen:
+                errors.add(f"{path}.id", f"duplicate variant id {variant_id!r}")
+            seen.add(variant_id)
+        request = _parse_request(table.get("request"), f"{path}.request", addresses, errors)
+        if variant_id is None or title is None or description is None or expect is None or request is None:
+            continue
+        variants.append(VariantSpec(variant_id, title, " ".join(description.split()), request, expect))
+    return tuple(variants)
+
+
+def _parse_request(raw: object, path: str, addresses: set[str], errors: _Errors) -> PaymentRequest | None:
+    table = _table(raw, path, errors)
+    if table is None:
+        return None
+    _fields(table, path, errors, {"request_id", "pay_to", "value", "chain_id"}, {"memo"})
+    request_id = _text(table, "request_id", path, errors)
+    pay_to = _text(table, "pay_to", path, errors, _ADDRESS)
+    value = _amount(table, "value", path, errors)
+    chain_id = _integer(table, "chain_id", path, errors, 1, 2**63 - 1)
+    memo = _text(table, "memo", path, errors) or ""
+    if pay_to is not None:
+        pay_to = pay_to.lower()
+        if pay_to not in addresses:
+            # The harness can only execute and observe transfers between scenario accounts.
+            errors.add(f"{path}.pay_to", "must be the address of one of the scenario's accounts")
+    if request_id is None or pay_to is None or value is None or chain_id is None:
+        return None
+    return PaymentRequest(request_id, pay_to, value, chain_id, memo)
+
+
+def _check_reference_transaction(transaction: TransferSpec | None, authorization: AuthorizationSpec | None,
+                                 errors: _Errors) -> None:  # fmt: skip
+    """In version 2 the reference transaction is the authorized transfer itself."""
+    if transaction is None or authorization is None:
+        return
+    expected = (authorization.payer, authorization.recipient, authorization.value)
+    if (transaction.sender, transaction.recipient, transaction.value) != expected:
+        errors.add("transaction", "must be the authorized transfer: from, to and value must equal [authorization]")
 
 
 _METADATA_LISTS = {"authors", "networks"}

@@ -1,0 +1,402 @@
+{
+ "report_format": "genesis.mission-report",
+ "report_version": 1,
+ "genesis_version": "0.1.0",
+ "mission": {
+  "id": "the-wrong-recipient",
+  "title": "The Wrong Recipient",
+  "attempt": 2,
+  "choice": {
+   "id": "exact-intent-match",
+   "label": "Validate every field against the authorization",
+   "policy": "exact-intent-match"
+  },
+  "evidence_inspected": [
+   "authorized-intent",
+   "payment-request",
+   "transaction-draft",
+   "chain-accounts",
+   "field-comparison"
+  ],
+  "hints_used": 1
+ },
+ "verdict": "passed",
+ "harness_report": {
+  "report_format": "genesis.scenario-report",
+  "report_version": 2,
+  "genesis_version": "0.1.0",
+  "status": "passed",
+  "error": null,
+  "scenario": {
+   "id": "wrong-recipient",
+   "version": "1.0.0",
+   "title": "The Wrong Recipient",
+   "manifest_version": 2,
+   "manifest_digest": "1d9ec9c36403f2f8568ab1e8c5cc5098a6640b7e1bbc7353e2e7b76975ec327e",
+   "source": "D:\\Github\\project-genesis\\scenarios\\wrong-recipient\\scenario.toml"
+  },
+  "decided_by": "policy:exact-intent-match",
+  "environment": {
+   "client_version": "anvil/v0.0.0-test-double"
+  },
+  "summary": {
+   "variants": 2,
+   "runs": 2,
+   "passed_runs": 2
+  },
+  "variants": [
+   {
+    "variant": "authorized-request",
+    "title": "The request matches the authorization",
+    "expect": "accept",
+    "status": "passed",
+    "decision": {
+     "accepted": true,
+     "decided_by": "policy:exact-intent-match",
+     "reasons": [
+      "Paid: recipient, amount and chain all exactly match the authorization.",
+      "recipient: The request pays bob, exactly as authorized.",
+      "value: The amount matches the authorization.",
+      "chain_id: The request targets the authorized chain."
+     ]
+    },
+    "request": {
+     "request_id": "req-2041",
+     "pay_to": "0x0000000000000000000000000000000000000b0b",
+     "value_wei": "1500000000000000000",
+     "chain_id": 31337,
+     "memo": "INV-0042 logo design"
+    },
+    "submission": {
+     "from": "alice",
+     "to": "bob",
+     "value_wei": "1500000000000000000",
+     "gas_limit": 21000
+    },
+    "grading": {
+     "passed": true,
+     "score": 15,
+     "max_score": 15,
+     "pass_threshold": 15,
+     "failed_required": [],
+     "criteria": [
+      {
+       "id": "correct-decision",
+       "check": "decision",
+       "description": "The request was paid if and only if it matches the authorization.",
+       "required": true,
+       "points": 3,
+       "awarded": 3,
+       "passed": true,
+       "expected": "accepted",
+       "actual": "accepted",
+       "explanation": "This request matches the authorization, so paying it was correct."
+      },
+      {
+       "id": "only-authorized-transfers",
+       "check": "authorized_transfer",
+       "description": "Whatever was executed went to bob, for 1.5 ether, on chain 31337: nothing else.",
+       "required": true,
+       "points": 3,
+       "awarded": 3,
+       "passed": true,
+       "expected": "1.5 ether from alice to bob (0x0000000000000000000000000000000000000b0b) on chain 31337, or nothing at all",
+       "actual": "1.5 ether from 0x00000000000000000000000000000000000a11ce (alice) to 0x0000000000000000000000000000000000000b0b (bob) on chain 31337",
+       "explanation": "The executed transfer matches the authorization: payer, recipient, value and chain."
+      },
+      {
+       "id": "payment-succeeded",
+       "check": "receipt_status",
+       "description": "The authorized payment was mined with receipt status 1.",
+       "required": true,
+       "points": 2,
+       "awarded": 2,
+       "passed": true,
+       "expected": "success (1)",
+       "actual": "success (1)",
+       "explanation": "The receipt status is 1: the transaction was executed and its effects are on chain."
+      },
+      {
+       "id": "paid-bob",
+       "check": "recipient",
+       "description": "The authorized payment went to bob's full address.",
+       "required": true,
+       "points": 2,
+       "awarded": 2,
+       "passed": true,
+       "expected": "0x0000000000000000000000000000000000000b0b (bob)",
+       "actual": "0x0000000000000000000000000000000000000b0b (bob)",
+       "explanation": "The transaction paid bob, the expected recipient."
+      },
+      {
+       "id": "paid-exact-amount",
+       "check": "value",
+       "description": "The authorized payment carried exactly 1.5 ether.",
+       "required": false,
+       "points": 1,
+       "awarded": 1,
+       "passed": true,
+       "expected": "1500000000000000000 wei (1.5 ether)",
+       "actual": "1500000000000000000 wei (1.5 ether)",
+       "explanation": "Exactly 1.5 ether was sent."
+      },
+      {
+       "id": "bob-received-it",
+       "check": "final_balance",
+       "description": "Bob ends with exactly 1.5 ether.",
+       "required": false,
+       "points": 2,
+       "awarded": 2,
+       "passed": true,
+       "expected": "bob: 1500000000000000000 wei (1.5 ether)",
+       "actual": "bob: 1500000000000000000 wei (1.5 ether)",
+       "explanation": "bob ends with exactly 1.5 ether."
+      },
+      {
+       "id": "alice-paid-value-and-fee",
+       "check": "sender_pays_value_and_fee",
+       "description": "Alice paid 1.5 ether plus the gas fee, to the wei.",
+       "required": false,
+       "points": 1,
+       "awarded": 1,
+       "passed": true,
+       "expected": "alice pays 1500021000000000000 wei (value 1500000000000000000 + fee 21000 gas x 1000000000 wei)",
+       "actual": "alice paid 1500021000000000000 wei",
+       "explanation": "alice paid the value plus a fee of 21000 gas x 1000000000 wei, to the wei."
+      },
+      {
+       "id": "alice-nonce-rose",
+       "check": "nonce_increment",
+       "description": "Alice signed exactly one transaction.",
+       "required": false,
+       "points": 1,
+       "awarded": 1,
+       "passed": true,
+       "expected": "alice: +1",
+       "actual": "alice: +1",
+       "explanation": "alice's nonce rose by 1: every transaction from an account uses up one nonce."
+      }
+     ]
+    },
+    "observation": {
+     "normalized": {
+      "variant": "authorized-request",
+      "decision": "accepted",
+      "transfer": {
+       "chain_id": 31337,
+       "from": "alice",
+       "to": "bob",
+       "value_wei": "1500000000000000000",
+       "status": 1,
+       "gas_used": 21000,
+       "balances_before_wei": {
+        "alice": "10000000000000000000",
+        "bob": "0",
+        "unknown": "0"
+       },
+       "balance_changes_excluding_fee_wei": {
+        "alice": "-1500000000000000000",
+        "bob": "1500000000000000000",
+        "unknown": "0"
+       },
+       "nonce_changes": {
+        "alice": 1,
+        "bob": 0,
+        "unknown": 0
+       }
+      },
+      "balances_before_wei": {
+       "alice": "10000000000000000000",
+       "bob": "0",
+       "unknown": "0"
+      },
+      "balance_changes_excluding_fee_wei": {
+       "alice": "-1500000000000000000",
+       "bob": "1500000000000000000",
+       "unknown": "0"
+      },
+      "nonce_changes": {
+       "alice": 1,
+       "bob": 0,
+       "unknown": 0
+      }
+     },
+     "environment_specific": {
+      "transaction_hash": "0xb63d9c038d62698b13163d611ec4d4947807f50a43a137421d64444e2a38e09d",
+      "block_hash": "0xababddbe4e453f2ea11f527a5facf1946dc59aff44d03c4b680c9d4ad838ace2",
+      "block_number": 1,
+      "effective_gas_price_wei": "1000000000",
+      "fee_wei": "21000000000000",
+      "transaction_type": 2,
+      "client_version": "anvil/v0.0.0-test-double"
+     }
+    },
+    "balances": [
+     {
+      "label": "alice",
+      "address": "0x00000000000000000000000000000000000a11ce",
+      "before_wei": "10000000000000000000",
+      "after_wei": "8499979000000000000",
+      "change_wei": "-1500021000000000000"
+     },
+     {
+      "label": "bob",
+      "address": "0x0000000000000000000000000000000000000b0b",
+      "before_wei": "0",
+      "after_wei": "1500000000000000000",
+      "change_wei": "1500000000000000000"
+     },
+     {
+      "label": "unknown",
+      "address": "0x00000000000000000000000000000000000f0b0b",
+      "before_wei": "0",
+      "after_wei": "0",
+      "change_wei": "0"
+     }
+    ],
+    "normalized_digest": "8771802e3818601be34887e2fe00c3bcf0eb0201150367601ed26d2f0830c0ac",
+    "reset_verified": true,
+    "repeat": 1
+   },
+   {
+    "variant": "wrong-recipient",
+    "title": "The request names a different recipient",
+    "expect": "reject",
+    "status": "passed",
+    "decision": {
+     "accepted": false,
+     "decided_by": "policy:exact-intent-match",
+     "reasons": [
+      "Refused before signing: recipient does not match the authorization.",
+      "recipient: The request pays an address that is not bob. The addresses differ at hex digit(s) 36 of 40. Both shorten to 0x0000...0b0b, so a shortened preview hides the difference.",
+      "value: The amount matches the authorization.",
+      "chain_id: The request targets the authorized chain."
+     ]
+    },
+    "request": {
+     "request_id": "req-2042",
+     "pay_to": "0x00000000000000000000000000000000000f0b0b",
+     "value_wei": "1500000000000000000",
+     "chain_id": 31337,
+     "memo": "INV-0042 logo design"
+    },
+    "submission": null,
+    "grading": {
+     "passed": true,
+     "score": 9,
+     "max_score": 9,
+     "pass_threshold": 9,
+     "failed_required": [],
+     "criteria": [
+      {
+       "id": "correct-decision",
+       "check": "decision",
+       "description": "The request was paid if and only if it matches the authorization.",
+       "required": true,
+       "points": 3,
+       "awarded": 3,
+       "passed": true,
+       "expected": "rejected",
+       "actual": "rejected",
+       "explanation": "This request does not match the authorization, so refusing it was correct."
+      },
+      {
+       "id": "only-authorized-transfers",
+       "check": "authorized_transfer",
+       "description": "Whatever was executed went to bob, for 1.5 ether, on chain 31337: nothing else.",
+       "required": true,
+       "points": 3,
+       "awarded": 3,
+       "passed": true,
+       "expected": "1.5 ether from alice to bob (0x0000000000000000000000000000000000000b0b) on chain 31337, or nothing at all",
+       "actual": "no transfer",
+       "explanation": "No transfer was executed, so nothing unauthorized was paid."
+      },
+      {
+       "id": "nothing-moved",
+       "check": "balances_unchanged",
+       "description": "Refusing the mismatched request left every balance and nonce untouched.",
+       "required": true,
+       "points": 3,
+       "awarded": 3,
+       "passed": true,
+       "expected": "no change",
+       "actual": "no change",
+       "explanation": "No balance or nonce changed: nothing was signed or sent."
+      }
+     ]
+    },
+    "observation": {
+     "normalized": {
+      "variant": "wrong-recipient",
+      "decision": "rejected",
+      "transfer": null,
+      "balances_before_wei": {
+       "alice": "10000000000000000000",
+       "bob": "0",
+       "unknown": "0"
+      },
+      "balance_changes_excluding_fee_wei": {
+       "alice": "0",
+       "bob": "0",
+       "unknown": "0"
+      },
+      "nonce_changes": {
+       "alice": 0,
+       "bob": 0,
+       "unknown": 0
+      }
+     },
+     "environment_specific": null
+    },
+    "balances": [
+     {
+      "label": "alice",
+      "address": "0x00000000000000000000000000000000000a11ce",
+      "before_wei": "10000000000000000000",
+      "after_wei": "10000000000000000000",
+      "change_wei": "0"
+     },
+     {
+      "label": "bob",
+      "address": "0x0000000000000000000000000000000000000b0b",
+      "before_wei": "0",
+      "after_wei": "0",
+      "change_wei": "0"
+     },
+     {
+      "label": "unknown",
+      "address": "0x00000000000000000000000000000000000f0b0b",
+      "before_wei": "0",
+      "after_wei": "0",
+      "change_wei": "0"
+     }
+    ],
+    "normalized_digest": "16a3d9c2636fbed7df55155290c7b9e9a8ac66340d19d014c4534dba8655f7ec",
+    "reset_verified": true,
+    "repeat": 1
+   }
+  ],
+  "reproducibility": {
+   "normalized_digests": {
+    "authorized-request": [
+     "8771802e3818601be34887e2fe00c3bcf0eb0201150367601ed26d2f0830c0ac"
+    ],
+    "wrong-recipient": [
+     "16a3d9c2636fbed7df55155290c7b9e9a8ac66340d19d014c4534dba8655f7ec"
+    ]
+   },
+   "consistent": true,
+   "environment_specific_fields": [
+    "transaction_hash",
+    "block_hash",
+    "block_number",
+    "effective_gas_price_wei",
+    "fee_wei",
+    "transaction_type",
+    "client_version"
+   ],
+   "note": "Transaction and block hashes, block numbers, gas prices and fees depend on the node and its configuration, so they are recorded under environment_specific and never compared. The normalized observation holds only values fixed by the scenario; repeated runs must produce the same normalized digest."
+  }
+ }
+}

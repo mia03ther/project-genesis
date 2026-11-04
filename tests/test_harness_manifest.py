@@ -38,7 +38,8 @@ def test_bundled_scenario_is_valid() -> None:
         21_000,
     )
     assert manifest.grading.max_score == manifest.grading.pass_threshold == 13
-    assert {c.check for c in manifest.grading.criteria} == set(CHECKS)  # the scenario exercises every check
+    # The scenario exercises every check available to manifest version 1.
+    assert {c.check for c in manifest.grading.criteria} == {n for n, spec in CHECKS.items() if spec.since == 1}
     assert manifest.metadata["created"] == "2026-11-02"
 
 
@@ -137,8 +138,8 @@ def test_invalid_manifests_are_rejected_with_a_located_message(mutate: Mutation,
 
 def test_unsupported_manifest_version_is_refused_first() -> None:
     data = raw_manifest()
-    data["manifest_version"] = 2
-    with pytest.raises(ManifestError, match="manifest_version: 2 is not supported; this build reads 1"):
+    data["manifest_version"] = 3
+    with pytest.raises(ManifestError, match="manifest_version: 3 is not supported; this build reads 1, 2"):
         parse_manifest(data)
 
 

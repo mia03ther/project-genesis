@@ -17,13 +17,21 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+# The Security Lab web API. The simulator and the harness need no third-party packages.
+lab = ["fastapi>=0.115", "uvicorn>=0.30"]
+dev = ["pytest>=8", "httpx>=0.27", "mypy>=1.15", "ruff>=0.9"]
 
 [project.scripts]
 genesis = "genesis.cli:main"
 
 [tool.setuptools]
-packages = ["genesis", "genesis.harness"]
+packages = ["genesis", "genesis.harness", "genesis.lab", "genesis.pet"]
+
+[tool.setuptools.package-data]
+"genesis.pet" = ["assets/*.png", "assets/*.json"]
+
+[tool.ruff.lint.per-file-ignores]
+"genesis/pet/*.py" = ["RUF001"] # Chinese UI punctuation is intentional.
 
 [tool.setuptools.dynamic]
 version = { attr = "genesis.__version__" }
@@ -32,6 +40,11 @@ version = { attr = "genesis.__version__" }
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra"
+filterwarnings = [
+    # Starlette 1.x warns that its test client will move away from httpx; harmless for these tests.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
 markers = [
     "anvil: integration tests that start a local Anvil node (requires Foundry; skipped when anvil is not on PATH)",
+    "desktop: native Tk integration requiring a desktop (opt in with GENESIS_DESKTOP_TESTS=1)",
 ]

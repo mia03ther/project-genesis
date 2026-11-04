@@ -1,5 +1,48 @@
 # Project GENESIS
 
+**GENESIS / Nomi Island: a pixel adventure for Web3 learning.** Explore a dusk
+woodland with original pixel characters and bottom-screen dialogue. Move with WASD,
+sprint, meet residents, carry a practice parcel, and solve a local-chain payment
+mission. A desktop companion and Solidity/Remix workshop are optional. It runs
+without DeepSeek Harness or model API keys.
+The existing deterministic civilization engine remains available below.
+
+For Windows reviewers, install uv, a current Node.js LTS release, and Foundry/Anvil,
+then run from this checkout:
+
+```powershell
+.\scripts\Setup-Genesis.ps1
+.\scripts\Start-Genesis.ps1
+```
+
+The second command opens the browser game and starts a local Anvil-backed lab.
+Keep the terminal open; Ctrl+C shuts down the service it owns. Use
+`Start-Genesis.ps1 -WithPet` if you also want the desktop companion. Its
+**委托** button opens the game at `http://127.0.0.1:8000/`.
+Use **WASD / arrow keys** to move, **Shift** to sprint, **E** near a resident to
+interact, **Space** to pick up/throw the practice parcel or hop, and **Esc** for
+the menu. Mouse clicks on open ground also move Nomi; small screens have a
+direction pad. Start with Alice's northwest studio, visit the northeast relay,
+then try a validation rule at the southern payment terminal. You can explore
+without accepting the mission. The practice parcel/signals are local toys;
+only the backend can execute and grade a blockchain experiment.
+Press **M** to open the map. Dialogue stays at the bottom; full evidence unfolds
+only when requested. [Design references and decisions](docs/PIXEL_ART_DIRECTION.md).
+
+The menu opens the optional workshop, where you can edit the first Solidity
+exercise in embedded Remix. To use only the pet: `.\.venv\Scripts\python.exe -m genesis.pet`.
+It remains interactive while the lab is offline. See the
+[reviewer setup, controls and limitations](docs/COMPANION.md) and
+[Remix lesson](docs/REMIX_WORKSHOP.md). If a lab was running before an update,
+restart it to load the new backend/CSP. `Start-Genesis.ps1 -Port 8011` uses a separate port.
+After frontend changes rebuild and refresh the page; restart for backend changes.
+[Controls and implementation limits](docs/NOMI_ISLAND.md).
+
+**Verified scope:** local Anvil; native Windows/Tk companion; official Remix iframe
+loading. DSH task-event integration, Monad Testnet, native iPhone support and
+automatic grading of user-written Solidity are future work. Purple collectible-style
+art does not imply NFT issuance. Desktop companion counts never modify security grades.
+
 **A deterministic, programmable civilization simulation.** v0.1 is the
 foundation: a small economy of 20 autonomous residents who produce, trade and
 consume food, wood and stone in a daily market. The engine is authoritative,
@@ -9,9 +52,10 @@ Alongside it, the **scenario harness** (Phase 1) runs versioned Web3 learning
 scenarios on a private local Anvil chain and grades them deterministically. It
 starts with *First Local Blockchain Transfer*.
 
-It is written in plain Python 3.12 with only the standard library at runtime
-(SQLite included); `pytest` is the only development dependency. The harness
-additionally needs Foundry's `anvil` to run scenarios on a real local chain.
+The core simulator and harness use Python 3.12's standard library at runtime
+(SQLite included). The optional web lab uses FastAPI/Uvicorn; the game uses
+React and Canvas. Development checks use pytest, HTTPX, mypy and Ruff. The
+harness additionally needs Foundry's `anvil` to run scenarios on a real local chain.
 
 ## Vision
 
@@ -346,3 +390,10 @@ Each step builds on the engine's guarantees rather than bypassing them.
 
 Not chosen yet. Pick an open-source license (for example MIT or Apache-2.0)
 and add a `LICENSE` file before publishing.
+
+## Security Diagnostic Lab (Phase 2)
+
+The browser mission, The Wrong Recipient, connects to the local authoritative mission API. See [setup and acceptance steps](docs/SECURITY_LAB.md). Build with `npm --prefix frontend run build` and launch with `.\.venv\Scripts\python.exe -m genesis.lab`.
+
+
+The mission is played as a 2D pixel investigation game in Simplified Chinese, 「错付疑云」. Walk the detective between Alice's studio, the payment relay, Bob's atelier, the chain archive and the wallet terminal. Collect evidence, compare the complete addresses and pick a validation rule. Then watch where the real local-chain transfers go. Everything shown comes from the backend. What was and was not verified (desktop and an emulated iPhone viewport in Chromium; no real iPhone) is recorded in [docs/SECURITY_LAB.md](docs/SECURITY_LAB.md#pixel-investigation-game-frontend-2026-11-03). Screenshots are in [docs/screenshots](docs/screenshots). Open backend requests from the frontend are in [docs/FRONTEND_BACKEND_REQUESTS.md](docs/FRONTEND_BACKEND_REQUESTS.md).

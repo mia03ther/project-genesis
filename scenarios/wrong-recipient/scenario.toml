@@ -1,0 +1,174 @@
+# The Wrong Recipient
+# A GENESIS scenario manifest, format version 2 (docs/SCENARIO_FORMAT.md).
+# Local only: every account and every unit of ether exists only on a throwaway
+# Anvil development chain. The payment requests are invented, simplified JSON
+# messages for teaching; they do not implement x402 or any other protocol.
+
+manifest_version = 2
+
+[scenario]
+id = "wrong-recipient"
+version = "1.0.0"
+title = "The Wrong Recipient"
+summary = """
+A payments API asks Alice's wallet to pay an invoice. One request names the \
+recipient Alice authorized; the other names a different address that looks \
+the same in a shortened wallet preview. Validate both against the authorization."""
+difficulty = "beginner"
+estimated_minutes = 10
+learning_objectives = [
+    "Treat a payment request from a Web2 API as untrusted input, not as authorization",
+    "Compare a request with the original authorized intent field by field: recipient, amount and chain",
+    "Explain why a shortened address preview is not a verification",
+    "Use chain evidence (balances, nonces, code) to identify who an address belongs to",
+    "Show with a replay that a safe validator pays the correct request and refuses the mismatched one",
+]
+prerequisites = [
+    "Know what a value transfer, a recipient address and a transaction receipt are",
+    "First Local Blockchain Transfer (scenarios/first-local-transfer) is a good warm-up",
+]
+tags = ["evm", "payments", "authorization", "trust-boundary", "anvil", "local-only"]
+
+[environment]
+kind = "anvil"
+chain_id = 31337
+
+[[accounts]]
+label = "alice"
+address = "0x00000000000000000000000000000000000a11ce"
+balance = "10 ether"
+description = "Synthetic payer. The local chain impersonates it; it has no private key."
+
+[[accounts]]
+label = "bob"
+address = "0x0000000000000000000000000000000000000b0b"
+balance = "0 ether"
+description = "Synthetic recipient that Alice authorized to receive the invoice payment."
+
+[[accounts]]
+label = "unknown"
+address = "0x00000000000000000000000000000000000f0b0b"
+balance = "0 ether"
+description = "An address nobody authorized. It appears only in the mismatched request."
+
+[authorization]
+reference = "INV-0042"
+description = """
+Alice approved one payment of 1.5 ether to Bob for invoice INV-0042 \
+(logo design), on chain 31337."""
+payer = "alice"
+recipient = "bob"
+value = "1.5 ether"
+chain_id = 31337
+
+# The reference solution: the authorized transfer itself.
+[transaction]
+from = "alice"
+to = "bob"
+value = "1.5 ether"
+gas_limit = 21000
+
+[[variants]]
+id = "authorized-request"
+title = "The request matches the authorization"
+description = "The payments API asks for exactly what Alice approved."
+expect = "accept"
+[variants.request]
+request_id = "req-2041"
+pay_to = "0x0000000000000000000000000000000000000b0b"
+value = "1.5 ether"
+chain_id = 31337
+memo = "INV-0042 logo design"
+
+[[variants]]
+id = "wrong-recipient"
+title = "The request names a different recipient"
+description = """
+The payments API asks for the right amount on the right chain, but to an \
+address Alice never approved."""
+expect = "reject"
+[variants.request]
+request_id = "req-2042"
+pay_to = "0x00000000000000000000000000000000000f0b0b"
+value = "1.5 ether"
+chain_id = 31337
+memo = "INV-0042 logo design"
+
+# Criteria without `variants` apply to every variant. A variant passes only
+# when every criterion that applies to it passes.
+
+[[grading.criteria]]
+id = "correct-decision"
+check = "decision"
+points = 3
+required = true
+description = "The request was paid if and only if it matches the authorization."
+
+[[grading.criteria]]
+id = "only-authorized-transfers"
+check = "authorized_transfer"
+points = 3
+required = true
+description = "Whatever was executed went to bob, for 1.5 ether, on chain 31337: nothing else."
+
+[[grading.criteria]]
+id = "payment-succeeded"
+check = "receipt_status"
+expect = "success"
+points = 2
+required = true
+variants = ["authorized-request"]
+description = "The authorized payment was mined with receipt status 1."
+
+[[grading.criteria]]
+id = "paid-bob"
+check = "recipient"
+points = 2
+required = true
+variants = ["authorized-request"]
+description = "The authorized payment went to bob's full address."
+
+[[grading.criteria]]
+id = "paid-exact-amount"
+check = "value"
+points = 1
+variants = ["authorized-request"]
+description = "The authorized payment carried exactly 1.5 ether."
+
+[[grading.criteria]]
+id = "bob-received-it"
+check = "final_balance"
+account = "bob"
+expect = "1.5 ether"
+points = 2
+variants = ["authorized-request"]
+description = "Bob ends with exactly 1.5 ether."
+
+[[grading.criteria]]
+id = "alice-paid-value-and-fee"
+check = "sender_pays_value_and_fee"
+points = 1
+variants = ["authorized-request"]
+description = "Alice paid 1.5 ether plus the gas fee, to the wei."
+
+[[grading.criteria]]
+id = "alice-nonce-rose"
+check = "nonce_increment"
+account = "alice"
+points = 1
+variants = ["authorized-request"]
+description = "Alice signed exactly one transaction."
+
+[[grading.criteria]]
+id = "nothing-moved"
+check = "balances_unchanged"
+points = 3
+required = true
+variants = ["wrong-recipient"]
+description = "Refusing the mismatched request left every balance and nonce untouched."
+
+[metadata]
+authors = ["Project GENESIS"]
+created = 2026-11-03
+networks = ["anvil-local"]
+notes = "Local only. Synthetic accounts and test ether on a throwaway development chain. The payment requests are invented teaching messages, not x402."
