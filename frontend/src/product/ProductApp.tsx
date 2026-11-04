@@ -13,6 +13,7 @@ import type { Lab } from "../game/useLab";
 import { Workshop } from "../workshop/Workshop";
 import { WorldGame } from "../world/WorldGame";
 import { World } from "../world/engine";
+import { restoreExploration } from "../world/checkpoint";
 import mascot from "../../../genesis/pet/assets/companion.png";
 import identity from "../../../genesis/pet/assets/identity.json";
 import "./product.css";
@@ -30,7 +31,13 @@ function currentView(): View {
 
 export function ProductApp() {
   const [view, setView] = useState<View>(currentView);
-  const [world] = useState(() => new World());
+  const [world] = useState(() => {
+    try {
+      return restoreExploration(window.localStorage);
+    } catch {
+      return new World();
+    }
+  });
   useEffect(() => {
     const update = () => setView(currentView());
     window.addEventListener("hashchange", update);

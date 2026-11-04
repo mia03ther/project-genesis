@@ -27,7 +27,9 @@ then try a validation rule at the southern payment terminal. You can explore
 without accepting the mission. The practice parcel/signals are local toys;
 only the backend can execute and grade a blockchain experiment.
 Press **M** to open the map. Dialogue stays at the bottom; full evidence unfolds
-only when requested. [Design references and decisions](docs/PIXEL_ART_DIRECTION.md).
+only when requested. **E / Enter** advances story lines. Exploration position and
+collectibles save locally. The workshop now starts with an interactive rule-crafting
+trial before the Solidity editor. [Design references and decisions](docs/PIXEL_ART_DIRECTION.md).
 
 The menu opens the optional workshop, where you can edit the first Solidity
 exercise in embedded Remix. To use only the pet: `.\.venv\Scripts\python.exe -m genesis.pet`.

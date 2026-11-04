@@ -22,6 +22,7 @@ checkout, rebuild and refresh the browser; restart for backend changes.
 - WASD or arrows: move. Diagonal speed is normalized. Buildings and pond block movement.
 - Hold Shift: run. Click open ground: walk toward that spot. Clicking does not pathfind around buildings; use the keyboard to steer around obstacles.
 - E near a building/terminal: talk or inspect. Esc closes the dialogue or opens the pause menu.
+- During dialogue, E / Enter or the next-line button advances the conversation. Actions remain accessible without waiting through every line.
 - M: toggle the map. It is hidden during ordinary exploration and dialogue.
 - Space: pick up a nearby practice parcel, throw it if carrying, or hop. Put it in Bob's delivery circle for an optional toy objective. Walking over three purple signals collects them.
 - Small screens: hold the direction buttons; use the nearby-interaction and parcel buttons. Pointer release/cancel and window blur clear movement.
@@ -65,8 +66,13 @@ server-side permissions remain in force. Walking/exploration issue no POSTs.
 Dialogue pauses movement, traps keyboard focus and returns focus to the
 canvas on close. Backend failure leaves exploration available and shows a
 reconnect action. Keyboard movement is ignored while typing or using menus.
-The frontend keeps the toy world while navigating to/from the workshop;
-refreshing resets toy position/collectibles. The backend session resumes while
+The frontend keeps the toy world while navigating to/from the workshop.
+`checkpoint.ts` saves location, toy parcel, collected signals and delivery state
+every two seconds, on page hide and on leaving the world, using the versioned
+localStorage key `genesis.island.exploration.v1`. Invalid coordinates, unknown
+versions and malformed saves fall back to safe defaults. Blocked storage leaves
+exploration playable and displays a note in the menu. This is local toy progress;
+no permissions, balances, receipts or grades are stored there. The backend session resumes while
 the same lab process remains alive. A server restart loses that in-memory
 session, as before.
 
@@ -80,7 +86,7 @@ available from the menu rather than additional steps in the main game.
 This is a single-player interaction prototype with one mission, code-authored
 pixel art and basic local toys. The optional native pet still uses an earlier
 illustrated asset; it is a secondary prototype. There are no
-interiors, generated dialogue, multiplayer, saved exploration progression,
+interiors, generated dialogue, multiplayer,
 combat or production game animation. Canvas scenery is not a full screen-reader
 game; the menu's text mission panel is available as an alternative.
 

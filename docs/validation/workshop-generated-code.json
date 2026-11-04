@@ -1,0 +1,17 @@
+{
+  "format": "genesis.workshop-code-check",
+  "version": 1,
+  "checked_at": "2026-11-04T03:53:27.961Z",
+  "compiler": "0.8.28",
+  "source_sha256": "0461812e14639f8993b7e1515c08efa8738446d6d2d20f95dc43cd78962cf91e",
+  "status": "passed",
+  "exit_code": 0,
+  "checks": [
+    "testApproved",
+    "testWrongRecipient",
+    "testWrongAmount",
+    "testWrongChain"
+  ],
+  "stdout": "No files changed, compilation skipped\n\nRan 4 tests for test/Generated.t.sol:GeneratedTest\n[PASS] testApproved() (gas: 7035)\n[PASS] testWrongAmount() (gas: 7049)\n[PASS] testWrongChain() (gas: 7082)\n[PASS] testWrongRecipient() (gas: 6994)\nSuite result: ok. 4 passed; 0 failed; 0 skipped; finished in 15.31ms (13.50ms CPU time)\n\nRan 1 test suite in 27.50ms (15.31ms CPU time): 4 tests passed, 0 failed, 0 skipped (4 total tests)\n",
+  "stderr": ""
+}

@@ -16,6 +16,7 @@ import { WorldGame } from "./WorldGame";
 let backend: FakeLab;
 beforeEach(() => {
   backend = new FakeLab();
+  localStorage.clear();
   forgetLabVersion();
   window.history.replaceState(null, "", "/");
   vi.stubGlobal("fetch", vi.fn(backend.fetch));

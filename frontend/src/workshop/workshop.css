@@ -1,20 +1,509 @@
-.workshop { color: var(--ink); background: var(--cream); min-height: 100dvh; padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) 40px max(20px, env(safe-area-inset-left)); }
-.workshop-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; max-width: 1440px; margin: auto; }
-.workshop h1 { font-size: clamp(24px, 4vw, 38px); margin: 12px 0; }
-.workshop h2 { font-size: 20px; }
-.workshop p, .workshop li { line-height: 1.8; }
-.workshop .kicker { color: var(--ink2); }
-.workshop-grid { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(0, 1.2fr); gap: 30px; max-width: 1440px; margin: 28px auto; }
-.workshop-lesson, .workshop-editor { min-width: 0; }
-.workshop textarea { width: 100%; min-height: 540px; resize: vertical; display: block; padding: 18px; margin-top: 12px; border: 3px solid var(--ink); border-radius: 0; background: var(--night); color: var(--cream); font: 14px/1.7 var(--mono); tab-size: 4; }
-.workshop details { background: var(--paper); padding: 12px; margin: 10px 0; border: 1px solid var(--cream2); }
-.workshop summary { cursor: pointer; min-height: 32px; font-weight: 700; }
-.workshop pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.6 var(--mono); }
-.workshop code { overflow-wrap: anywhere; }
-.workshop .workshop-note { color: var(--ink2); font-size: 13px; }
-.workshop-remix { max-width: 1440px; margin: auto; border-top: 3px solid var(--ink); padding-top: 16px; }
-.workshop .btn { display: inline-flex; align-items: center; text-decoration: none; }
-.workshop iframe { width: 100%; height: 760px; border: 3px solid var(--ink); background: var(--night); }
-.workshop :focus-visible { outline-color: var(--ink); }
-.workshop-mobile { font-size: 13px; }
-@media (max-width: 899px) { .workshop-head { flex-direction: column-reverse; gap: 10px; } .workshop-grid { grid-template-columns: 1fr; } .workshop textarea { min-height: 360px; font-size: 16px; } .workshop-embed-button { display: none !important; } }
+.workshop {
+  color: var(--ink);
+  background: var(--cream);
+  min-height: 100dvh;
+  padding: max(20px, env(safe-area-inset-top))
+    max(20px, env(safe-area-inset-right)) 40px
+    max(20px, env(safe-area-inset-left));
+}
+.workshop-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1440px;
+  margin: auto;
+}
+.workshop h1 {
+  font-size: clamp(24px, 4vw, 38px);
+  margin: 12px 0;
+}
+.workshop h2 {
+  font-size: 20px;
+}
+.workshop p,
+.workshop li {
+  line-height: 1.8;
+}
+.workshop .kicker {
+  color: var(--ink2);
+}
+.workshop-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+  gap: 30px;
+  max-width: 1440px;
+  margin: 28px auto;
+}
+.workshop-lesson,
+.workshop-editor {
+  min-width: 0;
+}
+.workshop textarea {
+  width: 100%;
+  min-height: 540px;
+  resize: vertical;
+  display: block;
+  padding: 18px;
+  margin-top: 12px;
+  border: 3px solid var(--ink);
+  border-radius: 0;
+  background: var(--night);
+  color: var(--cream);
+  font: 14px/1.7 var(--mono);
+  tab-size: 4;
+}
+.workshop details {
+  background: var(--paper);
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid var(--cream2);
+}
+.workshop summary {
+  cursor: pointer;
+  min-height: 32px;
+  font-weight: 700;
+}
+.workshop pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 12px/1.6 var(--mono);
+}
+.workshop code {
+  overflow-wrap: anywhere;
+}
+.workshop .workshop-note {
+  color: var(--ink2);
+  font-size: 13px;
+}
+.workshop-remix {
+  max-width: 1440px;
+  margin: auto;
+  border-top: 3px solid var(--ink);
+  padding-top: 16px;
+}
+.workshop .btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.workshop iframe {
+  width: 100%;
+  height: 760px;
+  border: 3px solid var(--ink);
+  background: var(--night);
+}
+.workshop :focus-visible {
+  outline-color: var(--ink);
+}
+.workshop-mobile {
+  font-size: 13px;
+}
+@media (max-width: 899px) {
+  .workshop-head {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  .workshop-grid {
+    grid-template-columns: 1fr;
+  }
+  .workshop textarea {
+    min-height: 360px;
+    font-size: 16px;
+  }
+  .workshop-embed-button {
+    display: none !important;
+  }
+}
+
+/* The same dusk ink, lavender and amber as the island dialogue stage. */
+.workshop {
+  width: 100%;
+  color: #d8d7cf;
+  background: #192132;
+  color-scheme: dark;
+  font-family: system-ui, "Microsoft YaHei", sans-serif;
+  padding: 28px max(24px, calc((100vw - 1200px) / 2)) 50px;
+}
+.workshop-head {
+  align-items: center;
+  border-bottom: 1px solid #45465d;
+  padding-bottom: 25px;
+}
+.workshop-guide {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.workshop-portrait {
+  width: 70px;
+  flex-shrink: 0;
+  border: 1px solid #766888;
+  padding: 4px;
+  background: #121a2c;
+}
+.workshop-portrait svg {
+  width: 60px;
+  display: block;
+  image-rendering: pixelated;
+}
+.workshop .kicker,
+.workshop-eyebrow {
+  color: #a996c1;
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.workshop h1 {
+  font-size: 25px;
+  color: #e0d1ec;
+  margin: 8px 0;
+}
+.workshop-head p {
+  font-size: 12px;
+  color: #aaaec0;
+  margin: 7px 0;
+}
+.workshop h2 {
+  font-size: 18px;
+  color: #d7c4e6;
+}
+.workshop p,
+.workshop li {
+  font-size: 12px;
+}
+.workshop .btn {
+  background: #303047;
+  color: #dcd4e5;
+  border: 1px solid #726381;
+  border-radius: 2px;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 500;
+  min-height: 44px;
+  padding: 9px 15px;
+  justify-content: center;
+}
+.workshop .btn:hover:not(:disabled) {
+  background: #49405e;
+}
+.workshop .btn.primary {
+  background: #74618f;
+  border-color: #ad94c7;
+}
+.workshop .btn.ghost {
+  background: transparent;
+  color: #aaa2b9;
+}
+.workshop .btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.workshop .btn:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+.workshop :focus-visible {
+  outline: 2px solid #ebce9f;
+  outline-offset: 3px;
+}
+.workshop details {
+  background: #222b3d;
+  border-color: #44485e;
+  padding: 11px 14px;
+}
+.workshop summary {
+  font-size: 11px;
+  font-weight: 500;
+  color: #bdb0cd;
+}
+.workshop .workshop-note {
+  color: #8f9aaf;
+  font-size: 11px;
+}
+.workshop .workshop-note code {
+  color: #c5b7da;
+}
+.workshop .workshop-editor > label {
+  font-size: 11px;
+  color: #bbaacd;
+  letter-spacing: 1px;
+}
+.workshop textarea {
+  border: 1px solid #5d5871;
+  background: #141d2d;
+  color: #d5d7d0;
+  min-height: 420px;
+  font-size: 12px;
+  line-height: 1.9;
+  padding: 20px;
+}
+.workshop-grid {
+  margin-top: 35px;
+  gap: 26px;
+}
+.workshop-remix {
+  border-top: 1px solid #44485e;
+}
+.workshop iframe {
+  border: 1px solid #726381;
+  background: #141d2d;
+}
+.workshop pre {
+  color: #c3bccb;
+  font-size: 11px;
+}
+.workshop-draft-confirm {
+  border: 1px solid #bd9c77;
+  background: #322d39;
+  padding: 12px 18px;
+  margin-top: 18px;
+}
+.workshop-draft-confirm .btn {
+  margin: 0 8px 4px 0;
+}
+.rule-workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 20px 36px;
+  margin: 30px 0;
+  padding: 25px 28px;
+  border: 1px solid #5e5671;
+  box-shadow: 0 0 0 4px #151c2c;
+  background: #20273a;
+}
+.forge-intro h2 {
+  font-size: 22px;
+  margin: 12px 0;
+}
+.forge-intro p {
+  color: #a4aebe;
+  max-width: 450px;
+  line-height: 1.9;
+}
+.forge-seals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 22px 0;
+}
+.forge-seals button {
+  font: inherit;
+  border: 1px solid #4e5065;
+  background: #252d40;
+  color: #a2a3b7;
+  padding: 16px 8px;
+  cursor: pointer;
+  min-height: 120px;
+}
+.forge-seals button[aria-pressed="true"] {
+  border-color: #b99bd4;
+  background: #403650;
+  box-shadow: inset 0 -3px #7c6796;
+  color: #ebd8fa;
+}
+.forge-seals button > span {
+  display: block;
+  font-size: 28px;
+  line-height: 1.3;
+  color: #b99ed7;
+}
+.forge-seals strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  margin: 10px 0 5px;
+}
+.forge-seals small {
+  font-size: 9px;
+  display: block;
+  color: #939bb0;
+}
+.forge-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.forge-trial {
+  padding: 10px 0;
+}
+.forge-stamp {
+  position: relative;
+  margin: 0 auto 16px;
+  width: 95px;
+  height: 95px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #655978;
+  box-shadow:
+    inset 0 0 0 5px #20273a,
+    inset 0 0 0 6px #655978;
+  transform: rotate(45deg);
+  background: #2a2c43;
+}
+.forge-stamp > span {
+  font-size: 48px;
+  color: #8b78aa;
+  transform: rotate(-45deg);
+}
+.forge-stamp i {
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  font-size: 8px;
+  color: #b7a1ce;
+  font-style: normal;
+  transform: rotate(-45deg);
+}
+.forge-stamp.complete {
+  border-color: #c5a5e2;
+  background: #443751;
+  box-shadow:
+    inset 0 0 0 5px #20273a,
+    inset 0 0 0 6px #bd9ad9;
+}
+.forge-stamp.complete > span {
+  color: #edcda0;
+}
+.forge-samples {
+  list-style: none;
+  padding: 0;
+  margin: 23px 0 8px;
+}
+.forge-samples li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #404456;
+  font-size: 11px;
+}
+.forge-samples li > span {
+  font-size: 15px;
+  color: #7e859e;
+  width: 18px;
+}
+.forge-samples strong {
+  font-weight: 500;
+  color: #b8becc;
+}
+.forge-samples small {
+  margin-left: auto;
+  color: #8a94aa;
+  font-size: 10px;
+}
+.forge-samples .correct > span,
+.forge-samples .correct small {
+  color: #a4c4b2;
+}
+.forge-samples .incorrect > span,
+.forge-samples .incorrect small {
+  color: #da9caa;
+}
+.workshop .forge-verdict {
+  font-size: 10px;
+  line-height: 1.8;
+  color: #bcabce;
+  min-height: 36px;
+}
+.workshop .forge-formula {
+  grid-column: 1/-1;
+  margin: 0;
+  padding: 3px 12px;
+  background: #192235;
+}
+.forge-formula code {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #c3b4d7;
+  display: block;
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.forge-boundary {
+  grid-column: 1/-1;
+  margin: 0;
+}
+@media (max-width: 899px) {
+  .workshop {
+    padding: 18px 16px 40px;
+  }
+  .workshop-head {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 20px;
+  }
+  .workshop-head > .btn {
+    align-self: flex-start;
+  }
+  .workshop-guide {
+    gap: 14px;
+  }
+  .workshop h1 {
+    font-size: 21px;
+  }
+  .workshop-portrait {
+    width: 58px;
+  }
+  .workshop-portrait svg {
+    width: 48px;
+  }
+  .rule-workbench {
+    grid-template-columns: 1fr;
+    padding: 20px 16px;
+    gap: 20px;
+    margin: 24px 0;
+  }
+  .forge-trial {
+    display: grid;
+    grid-template-columns: 85px minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+  }
+  .forge-stamp {
+    width: 62px;
+    height: 62px;
+    margin: 0 0 0 6px;
+  }
+  .forge-stamp > span {
+    font-size: 34px;
+  }
+  .forge-stamp i {
+    font-size: 7px;
+    bottom: 2px;
+    right: 4px;
+  }
+  .forge-samples {
+    margin: 0;
+  }
+  .forge-verdict {
+    grid-column: 1/-1;
+    margin: 0;
+  }
+  .forge-seals {
+    gap: 7px;
+    margin: 18px 0;
+  }
+  .forge-seals button {
+    min-height: 110px;
+    padding: 12px 5px;
+  }
+  .forge-seals small {
+    font-size: 8px;
+  }
+  .forge-actions .btn {
+    flex: 1;
+    font-size: 11px;
+  }
+  .workshop textarea {
+    min-height: 340px;
+    font-size: 16px;
+  }
+  .workshop-grid {
+    gap: 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workshop * {
+    scroll-behavior: auto;
+  }
+}

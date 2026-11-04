@@ -1,13 +1,21 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { forgetLabVersion } from "../api";
 import { FakeLab } from "../test/fakeBackend";
 import { ProductApp } from "./ProductApp";
+import { EXPLORATION_KEY } from "../world/checkpoint";
 
 let backend: FakeLab;
 beforeEach(() => {
   backend = new FakeLab();
+  localStorage.clear();
   forgetLabVersion();
   window.history.replaceState(null, "", "/#space");
   vi.stubGlobal("fetch", vi.fn(backend.fetch));
@@ -20,6 +28,28 @@ afterEach(() => {
 });
 
 describe("Unified GENESIS companion product", () => {
+  it("returns from the workshop at the saved island location", async () => {
+    const canvasContext = vi
+      .spyOn(HTMLCanvasElement.prototype, "getContext")
+      .mockReturnValue(null);
+    try {
+      localStorage.setItem(
+        EXPLORATION_KEY,
+        JSON.stringify({ version: 1, x: 340, y: 350 }),
+      );
+      window.history.replaceState(null, "", "#workshop");
+      render(<ProductApp />);
+      await userEvent
+        .setup()
+        .click(screen.getByRole("button", { name: "返回小岛" }));
+      await waitFor(() => expect(backend.count("GET /api/session")).toBe(1));
+      fireEvent.keyDown(screen.getByLabelText(/^游戏场景/), { key: "e" });
+      expect(screen.getByRole("dialog", { name: /Alice/ })).toBeInTheDocument();
+      expect(window.location.hash).toBe("");
+    } finally {
+      canvasContext.mockRestore();
+    }
+  });
   it("keeps petting separate from grades and opens the same product mission", async () => {
     const user = userEvent.setup();
     render(<ProductApp />);

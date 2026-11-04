@@ -13,6 +13,8 @@ import { PixelPortrait } from "./art";
 import { HEIGHT, places, WIDTH, World } from "./engine";
 import type { PlaceId } from "./engine";
 import { camera, renderWorld } from "./render";
+import { Dialogue } from "./Dialogue";
+import { saveExploration } from "./checkpoint";
 import "./world.css";
 
 type Panel = PlaceId | "menu" | null;
@@ -80,6 +82,7 @@ export function GameScene({
   const [selected, setSelected] = useState("");
   const [journal, setJournal] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [saved, setSaved] = useState(true);
   const [position, setPosition] = useState({
     x: world.x,
     y: world.y,
@@ -119,6 +122,27 @@ export function GameScene({
   }
   const interaction = useRef(interact);
   interaction.current = interact;
+
+  useEffect(() => {
+    const save = () => {
+      try {
+        setSaved(saveExploration(world, window.localStorage));
+      } catch {
+        setSaved(false);
+      }
+    };
+    const timer = window.setInterval(save, 2000);
+    window.addEventListener("pagehide", save);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("pagehide", save);
+      try {
+        saveExploration(world, window.localStorage);
+      } catch {
+        /* Movement remains available without browser storage. */
+      }
+    };
+  }, [world]);
 
   useEffect(() => {
     const motion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
@@ -215,13 +239,19 @@ export function GameScene({
     if (!panel) return;
     world.keys.clear();
     world.target = null;
-    dialog.current?.querySelector<HTMLElement>("button")?.focus();
+    (
+      dialog.current?.querySelector<HTMLElement>("[data-dialogue-next]") ??
+      dialog.current?.querySelector<HTMLElement>("button")
+    )?.focus();
   }, [panel, world]);
   useEffect(() => {
     // An accepted commission removes its button; a completed replay removes
     // the rule form. Keep focus inside the surviving dialogue after either.
     if (panel && !dialog.current?.contains(document.activeElement)) {
-      dialog.current?.querySelector<HTMLElement>("button")?.focus();
+      (
+        dialog.current?.querySelector<HTMLElement>("[data-dialogue-next]") ??
+        dialog.current?.querySelector<HTMLElement>("button")
+      )?.focus();
     }
   }, [panel, lab.busy, lab.result]);
   useEffect(() => {
@@ -229,7 +259,11 @@ export function GameScene({
   }, [lab.session?.choice?.id, lab.session?.attempt]);
   useEffect(() => {
     if (position.signals)
-      setMessage(`发现信号碎片！${position.signals}/3。继续在岛上找找。`);
+      setMessage(
+        position.signals === 3
+          ? "三枚信号碎片收齐了！可以继续送包裹，或者去完成委托。"
+          : `信号碎片 ${position.signals}/3。继续在岛上找找。`,
+      );
   }, [position.signals]);
   useEffect(() => {
     if (position.delivered)
@@ -261,6 +295,21 @@ export function GameScene({
   const entry = lab.session?.evidence.find((e) => e.id === place?.evidence);
   const point = places.find((p) => p.id === goal)!;
   const busy = Boolean(lab.busy);
+  const narration =
+    panel && panel !== "menu"
+      ? panel === "alice" && lab.session
+        ? [
+            "授权书交给你了。",
+            "去东面的中继站取请求吧。",
+            "看清楚：我想付给的，是 Bob。",
+          ]
+        : panel === "bob" && position.delivered
+          ? [
+              "包裹收到了，谢谢你！",
+              "我们再看看付款地址——名字像，可不代表是同一个人。",
+            ]
+          : (words[panel].match(/[^。！？]+[。！？]?/g) ?? [words[panel]])
+      : [];
 
   function walk(event: ReactPointerEvent<HTMLCanvasElement>) {
     if (panel || event.pointerType === "touch") return;
@@ -543,16 +592,19 @@ export function GameScene({
                   WASD 小岛是客户端玩法原型；实验成绩来自 Python + Anvil。未连接
                   Monad Testnet 或 DSH。触屏方向键可用，尚未实机验证 iPhone。
                 </p>
+                <p className="world-note">
+                  {saved
+                    ? "探索位置与收集物会保存在此浏览器。"
+                    : "浏览器暂未保存探索记录，刷新可能丢失岛上进度。"}
+                  链上委托进度由本地实验服务管理。
+                </p>
               </>
             ) : (
               <>
-                <p className="world-dialogue">
-                  {panel === "alice" && lab.session
-                    ? "授权书交给你了。去东面的中继站取请求吧。看清楚：我想付给的，是 Bob。"
-                    : panel === "bob" && position.delivered
-                      ? "包裹收到了，谢谢你！我们再看看付款地址——名字像，可不代表是同一个人。"
-                      : place && words[place.id]}
-                </p>
+                <Dialogue
+                  key={`${panel}:${Boolean(lab.session)}:${position.delivered}`}
+                  lines={narration}
+                />
                 {!lab.session && panel !== "workshop" ? (
                   <>
                     {panel !== "alice" && (

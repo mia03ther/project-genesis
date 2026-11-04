@@ -1,6 +1,8 @@
 # Solidity workshop and Remix
 
-From the game HUD choose **合约工坊**, or open `http://127.0.0.1:8000/#workshop` after building the frontend. The workshop is accessible even before a case is completed, so users can explore freely. Returning preserves the existing game hook/session.
+From the game menu choose **合约工坊**, visit its island building, or open `http://127.0.0.1:8000/#workshop` after building the frontend. The workshop is accessible before a case is completed. Returning resumes the backend session and local island exploration.
+
+The opening activity is a rule-crafting board: select recipient, amount and network seals, then test four fixed teaching samples. Incorrect choices show which sample was accepted/rejected; changing a seal clears the old result. All four samples must be handled correctly to generate a Solidity exercise draft. This is a deterministic preview of the selected rules, **not execution or grading of the edited Solidity**. It sends no API requests and awards no chain grade. Replacing an edited draft requires a second confirmation; changing the configuration cancels pending replacement. The workshop shares the island's pixel portrait, ink/lavender palette and return-to-island entry.
 
 The first exercise converts the Wrong Recipient lesson into a pure Solidity predicate. The starter deliberately omits the recipient comparison; it has a warning and no transfers, deposits, external calls, or actual authorization signatures. A reference implementation checks recipient, value, and the supplied chain ID. This is not a production wallet guard: supplying a chain ID is not proof of the active network, and payer authentication is outside this lesson.
 
@@ -25,3 +27,14 @@ cd contracts\authorization
 The six tests cover those vectors, show that the incomplete starter accepts the wrong address, and fuzz rejection of other recipients (256 runs). Foundry compiles repository-owned files only. The first run may download the pinned official Solidity compiler. Arbitrary uploaded Solidity must not later be executed without a separately designed resource/isolation boundary.
 
 Browser verification: embedded Remix loaded and displayed the exercise source. Its AI/analytics consent prompt appeared; no consent was accepted and no in-browser compilation/deployment was claimed. Compilation and behavioral verification were performed separately using local Foundry. iPhone Safari and remote access are not verified.
+
+Developer check of the current **generated** Solidity (Node 24, Foundry and cached solc 0.8.28):
+
+```powershell
+node scripts/Check-Workshop.cjs --forge "$env:USERPROFILE\.foundry\bin\forge.exe"
+```
+
+This writes a temporary project under `reports/crafted-check`, compiles it offline,
+runs four behavioral tests and writes `report.json`. It never reads the browser's
+edited draft. If the compiler is not cached, first run the reference Foundry
+suite above with internet access to acquire the official pinned compiler.
