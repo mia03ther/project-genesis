@@ -23,3 +23,7 @@ htmlcov/
 genesis_report_day*.json
 genesis_*_day*.csv
 reports/
+
+# Foundry build output (contracts/)
+contracts/out/
+contracts/cache/
