@@ -243,6 +243,51 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--save", default=None, help="also save the resulting world to this file")
 
     register_scenario_commands(commands)
+
+    # `genesis monad anchor`: put a GENESIS world digest on Monad Testnet via
+    # the GenesisLedger contract (see contracts/README.md). Key handling lives
+    # in genesis.harness.monad; the key is never printed or stored.
+    from genesis.harness.monad import (
+        MONAD_TESTNET_RPC_URL,
+        cmd_anchor,
+    )
+
+    monad = commands.add_parser(
+        "monad",
+        help="Monad Testnet: anchor a world digest on-chain",
+        description="Monad Testnet commands. Anchoring needs a funded key "
+        "(GENESIS_MONAD_PRIVATE_KEY or --private-key) and a deployed GenesisLedger "
+        "contract address; nothing here runs against mainnet.",
+    )
+    monad_actions = monad.add_subparsers(dest="monad_command", required=True, metavar="ACTION")
+    anchor = monad_actions.add_parser(
+        "anchor",
+        help="record a world digest on Monad Testnet and print the explorer link",
+    )
+    anchor.add_argument("--digest", required=True, help="state digest to anchor, '0x' + 64 hex digits")
+    anchor.add_argument("--day", type=int, required=True, help="world day the digest belongs to")
+    anchor.add_argument(
+        "--population", type=int, default=0, help="residents alive that day (default: %(default)s)"
+    )
+    anchor.add_argument(
+        "--trades", type=int, default=0, help="trades that had happened by that day (default: %(default)s)"
+    )
+    anchor.add_argument(
+        "--contract", default=None,
+        help="GenesisLedger address (or GENESIS_MONAD_LEDGER); deploy one first, see contracts/README.md",
+    )
+    anchor.add_argument(
+        "--rpc-url", default=MONAD_TESTNET_RPC_URL,
+        help="Monad Testnet RPC endpoint (default: %(default)s)",
+    )
+    anchor.add_argument(
+        "--private-key", default=None,
+        help="funded key (or GENESIS_MONAD_PRIVATE_KEY); never printed or stored",
+    )
+    anchor.add_argument(
+        "--cast", default="cast", help="cast executable for signing (default: %(default)s, found on PATH)"
+    )
+    anchor.set_defaults(handler=cmd_anchor)
     return parser
 
 
