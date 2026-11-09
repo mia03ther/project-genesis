@@ -100,13 +100,26 @@ def cmd_run(args: argparse.Namespace) -> int:
     if args.repeat < 1:
         print("error: --repeat must be at least 1")
         return 1
-    report = run_scenario(
-        manifest,
-        actor=_actor(args, manifest),
-        repeat=args.repeat,
-        rpc_url=args.rpc_url,
-        anvil_executable=args.anvil,
-    )
+    if manifest.environment.kind == "monad":
+        if args.repeat != 1:
+            print("error: Monad scenarios cannot repeat: history is permanent and cannot be reset")
+            return 1
+        report = run_scenario(
+            manifest,
+            actor=_actor(args, manifest),
+            repeat=args.repeat,
+            rpc_url=args.rpc_url,
+            private_key=args.private_key,
+            cast_executable=args.cast,
+        )
+    else:
+        report = run_scenario(
+            manifest,
+            actor=_actor(args, manifest),
+            repeat=args.repeat,
+            rpc_url=args.rpc_url,
+            anvil_executable=args.anvil,
+        )
     path = write_report(report, args.report or Path("reports") / f"{manifest.scenario.id}.json")
     print(render_report(report))
     print(f"Report written to {path}")
@@ -121,6 +134,10 @@ def render_report(report: Mapping[str, Any]) -> str:
         lines.append(
             f"  node: {environment['client_version']} at {environment['rpc_url']} (chain {environment['chain_id']})"
         )
+    if environment.get("explorer_tx_url"):
+        lines.append(f"  explorer: {environment['explorer_tx_url']}")
+    if environment.get("reset"):
+        lines.append(f"  reset: {environment['reset']}")
     if report["error"]:
         lines.append(f"  error: {report['error']}")
     for run in report["runs"]:
@@ -152,8 +169,9 @@ def register(commands: Any) -> None:
     """Add the ``scenario`` command group to the main parser's subcommands."""
     scenario = commands.add_parser(
         "scenario",
-        help="Web3 learning scenarios on a local Anvil chain",
-        description="List, validate and run versioned learning scenarios on a local Anvil development chain.",
+        help="Web3 learning scenarios on a local Anvil chain or on Monad Testnet",
+        description="List, validate and run versioned learning scenarios on a local Anvil "
+        "development chain or on Monad Testnet.",
     )
     actions = scenario.add_subparsers(dest="scenario_command", required=True, metavar="ACTION")
     directory = argparse.ArgumentParser(add_help=False)
@@ -169,7 +187,8 @@ def register(commands: Any) -> None:
     validate.set_defaults(handler=cmd_validate)
 
     run = actions.add_parser(
-        "run", parents=[directory], help="run a scenario on a local Anvil chain and grade it"
+        "run", parents=[directory],
+        help="run a scenario and grade it (Anvil: local chain; Monad: live testnet, needs a funded key)",
     )
     run.add_argument("scenario", help="scenario id, scenario directory or manifest file")
     run.add_argument("--report", default=None, help="JSON report path (default: reports/<id>.json)")
@@ -180,6 +199,15 @@ def register(commands: Any) -> None:
         "--anvil", default="anvil", help="anvil executable (default: %(default)s, found on PATH)"
     )
     run.add_argument("--rpc-url", default=None, help="use a running local Anvil node instead of starting one")
+    run.add_argument(
+        "--private-key", default=None,
+        help="Monad Testnet key for a 'monad' scenario (or GENESIS_MONAD_PRIVATE_KEY); "
+        "never printed or stored",
+    )
+    run.add_argument(
+        "--cast", default="cast",
+        help="cast executable for signing Monad transactions (default: %(default)s, found on PATH)",
+    )
     run.add_argument("--from", dest="sender", default=None, help="submit from this account label instead")
     run.add_argument("--to", default=None, help="submit to this account label instead")
     run.add_argument("--value", default=None, help="submit this amount instead, e.g. '1 ether'")

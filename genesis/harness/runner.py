@@ -272,16 +272,36 @@ class _Session:
 
 
 def run_scenario(manifest: ScenarioManifest, *, actor: Actor | None = None, repeat: int = 1,
-                 rpc_url: str | None = None, anvil_executable: str = "anvil") -> dict[str, Any]:  # fmt: skip
+                 rpc_url: str | None = None, anvil_executable: str = "anvil",
+                 private_key: str | None = None, cast_executable: str = "cast") -> dict[str, Any]:  # fmt: skip
     """Run a scenario ``repeat`` times from the same initial state and return the JSON report.
 
     Without ``rpc_url`` a private ``anvil`` process is started for the session
     and stopped afterwards; with it, an existing local Anvil node is used. Any
     failure of the environment is reported with status ``error`` rather than raised.
+
+    For a ``monad`` scenario, ``rpc_url`` is the Monad Testnet RPC endpoint
+    (default ``https://testnet-rpc.monad.xyz``), ``private_key`` is the funded
+    key (or the ``GENESIS_MONAD_PRIVATE_KEY`` environment variable), and
+    ``repeat`` must be 1 because a public chain cannot be reset.
     """
     if repeat < 1:
         raise ValueError("repeat must be at least 1")
     actor = actor if actor is not None else ReferenceActor()
+    if manifest.environment.kind == "monad":
+        # A public network is a different adapter, never a flag on the Anvil
+        # path below. ``run_monad_scenario`` handles keys, signing and the
+        # no-reset rule; it is imported lazily to avoid a circular import.
+        from genesis.harness.monad import run_monad_scenario
+
+        return run_monad_scenario(
+            manifest,
+            actor=actor,
+            repeat=repeat,
+            rpc_url=rpc_url,
+            private_key=private_key,
+            cast_executable=cast_executable,
+        )
     session = _Session(environment={"kind": manifest.environment.kind, "managed_node": rpc_url is None})
     process: AnvilProcess | None = None
     try:

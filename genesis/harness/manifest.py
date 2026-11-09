@@ -25,7 +25,9 @@ from genesis.models import GenesisError, is_int
 
 MANIFEST_VERSION = 1
 SUPPORTED_MANIFEST_VERSIONS = (1,)
-ENVIRONMENT_KINDS = ("anvil",)
+ENVIRONMENT_KINDS = ("anvil", "monad")
+#: Chain id a ``monad`` environment must declare: Monad Testnet.
+MONAD_TESTNET_CHAIN_ID = 10143
 DIFFICULTIES = ("beginner", "intermediate", "advanced")
 RECEIPT_STATUSES = ("success", "reverted")
 MANIFEST_FILENAMES = ("scenario.toml", "scenario.json")
@@ -112,7 +114,7 @@ class ScenarioInfo:
 
 @dataclass(frozen=True, slots=True)
 class EnvironmentSpec:
-    #: Only ``"anvil"`` (a local development chain) exists in manifest version 1.
+    #: ``"anvil"`` (a local development chain) or ``"monad"`` (Monad Testnet).
     kind: str
     chain_id: int
 
@@ -444,9 +446,18 @@ def _parse_environment(raw: object, errors: _Errors) -> EnvironmentSpec | None:
     _fields(table, "environment", errors, {"kind", "chain_id"}, set())
     kind = _text(table, "kind", "environment", errors)
     if kind is not None and kind not in ENVIRONMENT_KINDS:
-        errors.add("environment.kind", f"{kind!r} is not supported; manifest version 1 knows only 'anvil'")
+        errors.add(
+            "environment.kind",
+            f"{kind!r} is not supported; manifest version 1 knows only 'anvil' and 'monad'",
+        )
         kind = None
     chain_id = _integer(table, "chain_id", "environment", errors, 1, 2**63 - 1)
+    if kind == "monad" and chain_id is not None and chain_id != MONAD_TESTNET_CHAIN_ID:
+        errors.add(
+            "environment.chain_id",
+            f"a 'monad' environment must use Monad Testnet chain id {MONAD_TESTNET_CHAIN_ID}, got {chain_id}",
+        )
+        chain_id = None
     if kind is None or chain_id is None:
         return None
     return EnvironmentSpec(kind=kind, chain_id=chain_id)
