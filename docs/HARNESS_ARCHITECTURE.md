@@ -49,7 +49,8 @@ propose, and the engine validates and records.
 | `chain.py` | Minimal JSON-RPC client (standard library only), a typed adapter for the Anvil methods the harness uses, and a controller for a local `anvil` process |
 | `environment.py` | Applies a manifest's initial accounts, verifies them, snapshots the chain and restores it |
 | `grading.py` | The observation record, the criteria checks and the deterministic judge, with no chain access |
-| `runner.py` | Actors, submission validation, the run loop, repeat runs and the report |
+| `runner.py` | Actors, submission validation, the run loop, repeat runs and the report; dispatches `monad` scenarios to the Monad adapter |
+| `monad.py` | The Monad Testnet adapter: a public HTTPS JSON-RPC client, a `cast`-based signer, an environment that never resets, the Monad runner, and `genesis monad anchor` |
 | `cli.py` | `genesis scenario list / validate / run` |
 
 ## Lifecycle and reset
@@ -104,24 +105,63 @@ which uses a gas price of 1 gwei; a pinned test checks that value on both.
 
 ## Anvil-local versus Monad Testnet
 
-Everything in Phase 1 is Anvil-local and has been verified on Anvil 1.8.7
-only. Nothing has been run against Monad Testnet and no compatibility is
-claimed.
+Phase 1 is Anvil-local and has been verified on Anvil 1.8.7 (and 1.9.0 on
+Linux). The Monad adapter is implemented in `genesis/harness/monad.py`, with
+its own scenario (`scenarios/first-monad-transfer/`) and its own tests
+(`tests/test_harness_monad.py`), and the `GenesisLedger` contract
+(`contracts/GenesisLedger.sol`) that anchors a world's digest on-chain.
+**Nothing has been run against Monad Testnet yet** — no live transaction, no
+deployed contract — because that needs a funded key, which the repository
+does not contain. The adapter and scenario are verified offline against the
+in-repository test double and against a real `anvil` node started with
+`--chain-id 10143`.
 
-| | Anvil (implemented, Phase 1) | Monad Testnet (future, separate adapter) |
+| | Anvil (Phase 1) | Monad Testnet (implemented, untested live) |
 | --- | --- | --- |
 | Where | a process on this machine, `127.0.0.1` | a public test network reached over the internet |
 | Accounts | synthetic addresses, impersonated, no keys | real key pairs; every transaction must be signed |
 | Funds | set directly with `anvil_setBalance` | test tokens from a faucet; cannot be set |
 | Reset | `evm_snapshot` / `evm_revert` | impossible; history is permanent and public |
 | Determinism | fresh, private chain per run | shared state, other users, variable latency |
-| Gas and fees | Anvil's local EVM rules | Monad's own fee rules, which may differ and must be verified with tests |
+| Gas and fees | Anvil's local EVM rules | Monad's own fee rules; a plain transfer is still 21,000 gas on an EVM chain, but the fee actually paid is verified live |
+| Signing | none (impersonation) | Foundry's `cast` binary, key from `GENESIS_MONAD_PRIVATE_KEY` or `--private-key` only |
 
-A Monad integration will therefore be a separate adapter with its own key
-handling, funding, confirmation and normalization rules and its own tests. It
-will never be a flag on the Anvil adapter. Scenarios declare their environment
-(`environment.kind`), so a scenario that can only run locally can never be sent
-to a public network by accident.
+The Monad integration is a separate adapter with its own key handling,
+funding, confirmation and normalization rules and its own tests. It is never
+a flag on the Anvil adapter. Scenarios declare their environment
+(`environment.kind`), so a scenario that can only run locally can never be
+sent to a public network by accident, and a `monad` scenario's chain id is
+pinned to 10143 by the manifest loader.
+
+### How the Monad adapter works
+
+- **Client.** `PublicJsonRpcClient` is a second minimal JSON-RPC client that
+  requires `https://`. The loopback-only client in `chain.py` is untouched.
+- **Signing.** `CastSigner` shells out to `cast` (the same pattern as the
+  harness shelling out to `anvil`), so the runtime stays standard library
+  only. The key is never printed, never written to a report, and stripped
+  from error messages at two levels (inside the signer, and again wherever
+  an error is printed or stored).
+- **Environment.** `MonadEnvironment` never sets a balance, never
+  impersonates, never snapshots. It checks the chain id and that the sender
+  can afford the transfer, then records the before-state. On a loopback URL
+  only (a local test double), it funds and impersonates the scenario accounts
+  so the scenario can run offline with no key.
+- **Run.** `MonadRunner` asks the actor, validates the submission, sends it
+  (signed via `cast`, or unsigned on a loopback node), waits up to two minutes
+  for the receipt, grades with the same deterministic judge, and records
+  `reset_verified: false` with the reason. `--repeat` is refused: a second
+  run would start from different balances and a different nonce, so the
+  normalized digest could not match.
+- **Anchor.** `genesis monad anchor` sends `recordWorldDigest(day, digest,
+  population, trades)` to a deployed `GenesisLedger` and prints the
+  transaction hash and its explorer link. Deploy with
+  `forge create --rpc-url https://testnet-rpc.monad.xyz ...` (see
+  `contracts/README.md`).
+- **What a live run still needs.** A funded key (faucet:
+  https://faucet.monad.xyz), the manifest's `alice` address replaced with
+  the key's address, and a fresh `bob` address — see
+  `scenarios/first-monad-transfer/README.md`.
 
 ## Extension points
 
@@ -146,5 +186,22 @@ to a public network by accident.
   learners or agents, that code will need a real isolation boundary, such as a
   separate virtual machine. Neither the Anvil process nor an ordinary Docker
   container is sufficient on its own.
-- No model calls, no paid API keys, no wallets, no public transactions, and no
-  token contracts.
+- No model calls, no paid API keys, and no token contracts.
+
+## Scope and safety of the Monad adapter
+
+The Monad adapter is the one place public transactions happen, and it is
+deliberately narrow:
+
+- Testnet only: the manifest loader pins a `monad` environment to chain id
+  10143, and the adapter refuses any node on another chain id. There is no
+  mainnet path anywhere in the code.
+- Keys stay outside the repository: a key comes only from the
+  `GENESIS_MONAD_PRIVATE_KEY` environment variable or a `--private-key` flag,
+  is never written to a report or a file, and is redacted from every error
+  message. No key of any kind is stored in this repository.
+- Money at stake is test MON only, from the faucet, with no market value.
+  Every Monad transaction is permanent and public, so the scenario refuses
+  `--repeat` and the report always records `reset_verified: false`.
+- The `GenesisLedger` contract moves no money and is not a token; it only
+  records world digests.

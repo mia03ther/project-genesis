@@ -44,8 +44,15 @@ anything else is read.
 
 | Field | Type | Rules |
 | --- | --- | --- |
-| `kind` | string, required | only `anvil` (a local development chain) in version 1 |
-| `chain_id` | integer, required | the chain must report this id; `31337` is Anvil's default |
+| `kind` | string, required | `anvil` (a local development chain) or `monad` (Monad Testnet) |
+| `chain_id` | integer, required | the chain must report this id; `31337` is Anvil's default, `10143` is Monad Testnet and is the only chain id a `monad` environment accepts |
+
+A `monad` scenario is a real public transaction: it needs a funded key
+(`GENESIS_MONAD_PRIVATE_KEY`), it can never be reset (the report records
+`reset_verified: false`), and `--repeat` is refused. Its accounts are
+placeholders until a live run: the sender must be the funded key's address
+and the recipient a fresh address. See
+`scenarios/first-monad-transfer/README.md`.
 
 ### `[[accounts]]` (2 to 16)
 
