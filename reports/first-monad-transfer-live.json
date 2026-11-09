@@ -1,0 +1,39 @@
+{
+  "environment": {
+    "chain_id": 10143,
+    "explorer": "https://testnet.monadexplorer.com",
+    "faucet": "https://faucet.monad.xyz",
+    "kind": "monad",
+    "rpc_url": "https://testnet-rpc.monad.xyz"
+  },
+  "genesis_version": "0.1.0",
+  "note": "First LIVE Monad Testnet transfer, run 2026-11-09: the scenario passed 13/13 against the public testnet (chain 10143). Values above are the verified receipt fields from that run; verify them any time with: python main.py monad verify --tx 0x4b66b46fba5301e60452ae5d38c5e58e4f636302b7f80425777ef1a4355eae11",
+  "report_format": "genesis.live-monad-transfer",
+  "report_version": 1,
+  "scenario": {
+    "id": "first-monad-transfer",
+    "source": "scenarios/first-monad-transfer/scenario.toml",
+    "title": "First Monad Transfer",
+    "version": "1.0.0"
+  },
+  "summary": {
+    "max_score": 13,
+    "pass_threshold": 13,
+    "score": 13
+  },
+  "transaction": {
+    "block_number": 78228932,
+    "explorer_tx_url": "https://testnet.monadexplorer.com/tx/0x4b66b46fba5301e60452ae5d38c5e58e4f636302b7f80425777ef1a4355eae11",
+    "fee_mon": "0.002415",
+    "fee_wei": "2415000000000000",
+    "from": "0xE705B6cDfDc682bE49bdDa177A695207ff67Bf35",
+    "gas_price_gwei": "115",
+    "gas_price_wei": "115000000000",
+    "gas_used": 21000,
+    "hash": "0x4b66b46fba5301e60452ae5d38c5e58e4f636302b7f80425777ef1a4355eae11",
+    "status": "success",
+    "to": "0xEa3C22fE64eF4BfAf0fE58F49b7dF5fC5ABA3A09",
+    "value_mon": "1.5",
+    "value_wei": "1500000000000000000"
+  }
+}
