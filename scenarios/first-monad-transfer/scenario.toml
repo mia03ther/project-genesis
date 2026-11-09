@@ -1,0 +1,132 @@
+# First Monad Transfer
+# A GENESIS scenario manifest. Format: docs/SCENARIO_FORMAT.md
+# PUBLIC NETWORK: this scenario sends a real transaction on Monad Testnet
+# (chain 10143). It is permanent and public, it costs real test MON, and it
+# can never be reset. Read the notes at the bottom before running it.
+
+manifest_version = 1
+
+[scenario]
+id = "first-monad-transfer"
+version = "1.0.0"
+title = "First Monad Transfer"
+summary = """
+Send 1.5 MON from one account to another on Monad Testnet, then read the
+transaction receipt and confirm exactly what changed — on a public chain
+where history is permanent and nothing can be reset."""
+difficulty = "beginner"
+estimated_minutes = 20
+learning_objectives = [
+    "Send a plain value transfer on a public test network",
+    "Explain why a public transaction needs a signed key and faucet funds, unlike a local chain",
+    "Read a transaction receipt on a live network: its status, gas used and effective gas price",
+    "Explain why the sender's balance falls by the value plus the gas fee while the recipient gains exactly the value",
+    "Explain why a public run can never be reset, and what that means for grading",
+]
+prerequisites = [
+    "Know that a blockchain records transactions that change account balances",
+    "Have completed 'First Local Blockchain Transfer' on Anvil first",
+    "Be comfortable running commands in a terminal",
+]
+tags = ["evm", "transactions", "gas", "monad", "testnet", "public-network"]
+
+[environment]
+kind = "monad"
+chain_id = 10143
+
+[[accounts]]
+label = "alice"
+address = "0x00000000000000000000000000000000000a11ce"
+balance = "10 ether"
+description = """
+Placeholder sender address. Before a live run, replace this with the address
+of your funded Monad Testnet key: the key signs the transaction, so the sender
+must be that key's address. Offline (loopback) runs use this address as-is."""
+
+[[accounts]]
+label = "bob"
+address = "0x0000000000000000000000000000000000000b0b"
+balance = "0 ether"
+description = """
+Recipient. For a live run use a fresh address (one with a zero balance), or
+the 'bob-received-the-value' criterion cannot pass: on a public chain the
+recipient's starting balance is whatever it already is."""
+
+[transaction]
+from = "alice"
+to = "bob"
+value = "1.5 ether"
+gas_limit = 21000
+
+[grading]
+# Every point is needed to pass; three criteria are required on their own.
+pass_threshold = 13
+
+[[grading.criteria]]
+id = "transaction-succeeded"
+check = "receipt_status"
+expect = "success"
+points = 2
+required = true
+description = "The transaction was mined and its receipt status is 1 (success)."
+
+[[grading.criteria]]
+id = "sent-by-alice"
+check = "sender"
+points = 1
+description = "The transaction was sent from alice's address."
+
+[[grading.criteria]]
+id = "sent-to-bob"
+check = "recipient"
+points = 2
+required = true
+description = "The transaction was sent to bob's address."
+
+[[grading.criteria]]
+id = "exact-value"
+check = "value"
+points = 2
+required = true
+description = "The transaction carried exactly 1.5 MON (1500000000000000000 wei)."
+
+[[grading.criteria]]
+id = "bob-received-the-value"
+check = "final_balance"
+account = "bob"
+expect = "1.5 ether"
+points = 2
+description = "Bob's balance is exactly 1.5 MON: the recipient pays no gas. (Needs a fresh bob address on a live run.)"
+
+[[grading.criteria]]
+id = "alice-paid-value-and-fee"
+check = "sender_pays_value_and_fee"
+points = 2
+description = "Alice's balance fell by exactly the value plus gas used times the effective gas price."
+
+[[grading.criteria]]
+id = "plain-transfer-gas"
+check = "gas_used"
+expect = 21000
+points = 1
+description = "A plain transfer to an account without code uses 21,000 gas."
+
+[[grading.criteria]]
+id = "alice-nonce-increased"
+check = "nonce_increment"
+account = "alice"
+expect = 1
+points = 1
+description = "Alice's nonce rose by exactly one."
+
+[metadata]
+authors = ["Project GENESIS"]
+created = 2026-11-09
+networks = ["monad-testnet"]
+notes = """
+Public network. The transaction is real, permanent and public; it costs test
+MON and cannot be undone. The sender address in this manifest is a
+placeholder: a live run needs it replaced with the funded key's address, and
+bob needs to be a fresh address. Offline, the scenario runs against a
+loopback test double with no key, exactly like the Anvil scenario.
+"""
