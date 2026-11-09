@@ -35,6 +35,9 @@ class FakeAnvil:
         self.block_number = 0
         self.transactions: dict[str, dict[str, Any]] = {}
         self.receipts: dict[str, dict[str, Any]] = {}
+        #: Headers of the most recent HTTP request, lower-cased names.
+        #: Tests use this to assert what the harness clients actually send.
+        self.last_request_headers: dict[str, str] = {}
         self.snapshots: dict[int, Any] = {}
         self.next_snapshot = 1
         self.sent = 0
@@ -145,6 +148,9 @@ class FakeAnvilServer:
 
         class Handler(BaseHTTPRequestHandler):
             def do_POST(self) -> None:  # name required by http.server
+                node_ref.last_request_headers = {
+                    key.lower(): value for key, value in self.headers.items()
+                }
                 body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
                 try:
                     reply = {
