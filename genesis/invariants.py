@@ -156,6 +156,10 @@ def audit_event_log(world: World) -> list[str]:
                 tally.value += value
                 tally.trades += 1
                 tally.prices.add(price)
+            elif event.kind is EventKind.TAX:
+                rid = _subject(event.resident_id)
+                cash[rid] += data["rebate"] - data["tax_paid"]
+                debit_check(event.seq, rid)
             elif event.kind is EventKind.MARKET_CLEARED:
                 tally = auctions.pop((event.day, data["resource"]), _AuctionTally())
                 if (tally.volume, tally.value, tally.trades) != (

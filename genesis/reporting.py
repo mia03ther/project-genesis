@@ -77,6 +77,61 @@ def world_summary(world: World) -> dict[str, Any]:
     }
 
 
+def play_summary(world: World, *, tax_rate_bps: int = 0) -> dict[str, Any]:
+    """Machine-readable summary of a finished run, for the ``play`` command
+    and the browser playground.
+
+    The exact config, the session policy (tax rate, order cap), the state
+    digest, a trajectory and the residents ranked by wealth. Money is in
+    integer cents throughout. The digest is the same one
+    :meth:`World.state_digest` returns, so a browser run and a ``play`` run
+    with the same seed, config and policy must produce identical output —
+    that is the portability check: same code, same seed, same world, anywhere.
+    """
+    step = max(1, world.day // 10)
+    trajectory = [
+        {
+            "day": s.day,
+            "population": s.population,
+            "deaths": s.deaths,
+            "prices": plain_map(s.prices),
+            "trades": s.trade_count,
+            "units": sum(s.trade_volume.values()),
+            "value": sum(s.trade_value.values()),
+            "health": s.mean_health,
+            "gini": s.gini,
+        }
+        for s in world.stats
+        if s.day % step == 0 or s.day == world.day
+    ]
+    residents = sorted(world.living(), key=lambda r: -world.wealth(r))
+    return {
+        "config": world.config.to_dict(),
+        "policy": {
+            "tax_rate_bps": tax_rate_bps,
+            "max_orders_per_day": world.config.max_orders_per_day,
+        },
+        "seed": world.seed,
+        "days": world.day,
+        "digest": world.state_digest(),
+        "invariants": "OK",
+        "trajectory": trajectory,
+        "final": world_summary(world),
+        "residents": [
+            {
+                "id": r.id,
+                "name": r.name,
+                "occupation": str(r.occupation),
+                "health": r.health,
+                "cash": r.cash,
+                "inventory": plain_map(r.inventory),
+                "wealth": world.wealth(r),
+            }
+            for r in residents
+        ],
+    }
+
+
 def resident_rows(world: World) -> list[dict[str, Any]]:
     return [
         {

@@ -11,6 +11,7 @@ Commands:
 - ``verify``     re-check every invariant and audit the full event log
 - ``reset``      replace the saved world with a fresh day-0 world (asks first)
 - ``demo``       run a fresh world for 100 days in memory and print a summary
+- ``epoch``      run a short multi-civilization epoch with play-money bets
 - ``scenario``   list, validate and run Web3 learning scenarios (``genesis.harness.cli``)
 """
 
@@ -25,12 +26,16 @@ from dataclasses import replace
 from pathlib import Path
 
 from genesis import __version__
+from genesis.betting import place_bet, settle_epoch
+from genesis.chain import load_chain_facts, real_testnet_text
+from genesis.epoch import CIV_NAMES, run_epoch
 from genesis.harness.cli import register as register_scenario_commands
 from genesis.invariants import assert_invariants, audit_event_log, check_invariants
 from genesis.models import GenesisError, SimulationConfig
 from genesis.persistence import load_world, read_save_info, save_world
 from genesis.reporting import (
     CSV_TABLES,
+    play_summary,
     render_period,
     render_resident,
     render_residents,
@@ -155,6 +160,74 @@ def cmd_reset(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_play(args: argparse.Namespace) -> int:
+    """Run a world with the caller's own seed and policies and print a JSON summary.
+
+    This is the command-line twin of the browser playground: the same config
+    run here and in the browser must print the same digest. Policies are the
+    two levers the playground exposes — the daily redistribution tax and how
+    many orders each resident may place per day (0 shuts the market).
+    """
+    config = SimulationConfig()
+    if args.residents is not None:
+        config = replace(config, num_residents=args.residents)
+    if args.max_orders is not None:
+        config = replace(config, max_orders_per_day=args.max_orders)
+    world = create_world(config, seed=args.seed)
+    Simulation(world, tax_rate_bps=args.tax_bps or 0).run(args.days)
+    assert_invariants(world, audit=True)
+    print(json.dumps(play_summary(world, tax_rate_bps=args.tax_bps or 0), indent=2, sort_keys=True))
+    return 0
+
+
+def _parse_bet(spec: str, epoch_id: str, valid_civs: list[int]) -> tuple[str, int, int]:
+    """Parse one ``--bet player:civ:amount`` spec (amount in play-credit cents)."""
+    parts = spec.split(":")
+    if len(parts) != 3:
+        raise ValueError(f"--bet must be 'player:civ:amount', got {spec!r}")
+    player, civ_text, amount_text = parts
+    try:
+        civ, amount = int(civ_text), int(amount_text)
+    except ValueError:
+        raise ValueError(f"--bet civ and amount must be integers, got {spec!r}") from None
+    if civ not in valid_civs:
+        raise ValueError(f"--bet civ must be one of {valid_civs}, got {civ}")
+    return player, civ, amount
+
+
+def cmd_epoch(args: argparse.Namespace) -> int:
+    """Run one betting epoch (play money) and print its JSON result.
+
+    With ``--real-testnet`` instead, print only the verified Monad Testnet
+    facts and the exact commands to reproduce them — no epoch runs, no bet
+    is placed, no payout is claimed.
+    """
+    if args.real_testnet:
+        print(real_testnet_text(load_chain_facts()))
+        return 0
+    epoch = run_epoch(
+        seed=args.seed,
+        days=args.days,
+        num_civs=args.civs,
+        residents_per_civ=args.residents_per_civ,
+        tax_rate_bps=args.tax_bps or 0,
+        max_orders_per_day=args.max_orders if args.max_orders is not None else 10,
+    )
+    output: dict[str, object] = {"epoch": epoch}
+    if args.bet:
+        bets: list = []
+        for spec in args.bet:
+            player, civ, amount = _parse_bet(spec, epoch["epoch_id"], [c["id"] for c in epoch["civs"]])
+            bets = place_bet(
+                bets, player=player, civ=civ, amount=amount,
+                epoch_id=str(epoch["epoch_id"]), valid_civs=[c["id"] for c in epoch["civs"]],
+            )
+        output["bets"] = [bet.to_dict() for bet in bets]
+        output["settlement"] = settle_epoch(epoch, bets)
+    print(json.dumps(output, indent=2, sort_keys=True))
+    return 0
+
+
 def cmd_demo(args: argparse.Namespace) -> int:
     world = _new_world(args.seed, args.residents)
     Simulation(world).run(args.days)
@@ -236,6 +309,39 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_argument("--residents", type=int, default=None, help="number of residents (default: keep)")
     sub.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
 
+    sub = add("play", cmd_play, "run a world with your own seed and policies; print a JSON summary", with_db=False)
+    sub.add_argument("--days", type=int, default=100, help="days to simulate (default: %(default)s)")
+    sub.add_argument("--seed", type=int, default=DEFAULT_SEED, help="random seed (default: %(default)s)")
+    sub.add_argument("--residents", type=int, default=None, help="number of residents (default: 20)")
+    sub.add_argument(
+        "--tax-bps",
+        type=int,
+        default=None,
+        help="daily redistribution tax in basis points, 0-10000 (default: 0 = off)",
+    )
+    sub.add_argument(
+        "--max-orders",
+        type=int,
+        default=None,
+        help="orders each resident may place per day, 0-10 (default: 10; 0 shuts the market)",
+    )
+
+    sub = add("epoch", cmd_epoch, "run a betting epoch (play money) and print its JSON result", with_db=False)
+    sub.add_argument("--days", type=int, default=60, help="days per civilization, 30-90 (default: %(default)s)")
+    sub.add_argument("--seed", type=int, default=DEFAULT_SEED, help="epoch seed (default: %(default)s)")
+    sub.add_argument("--civs", type=int, default=4, help="civilizations, 2-4 (default: %(default)s)")
+    sub.add_argument("--residents-per-civ", type=int, default=5, help="residents per civilization (default: %(default)s)")
+    sub.add_argument("--tax-bps", type=int, default=None, help="daily redistribution tax in basis points (default: 0 = off)")
+    sub.add_argument("--max-orders", type=int, default=None, help="orders each resident may place per day (default: 10)")
+    sub.add_argument(
+        "--bet", action="append", default=None, metavar="PLAYER:CIV:AMOUNT",
+        help="place a play-money bet (amount in cents); repeatable, e.g. --bet alice:0:1000",
+    )
+    sub.add_argument(
+        "--real-testnet", action="store_true",
+        help="instead of running an epoch, show the verified Monad Testnet facts and commands",
+    )
+
     sub = add("demo", cmd_demo, "run a fresh world in memory and print a summary", with_db=False)
     sub.add_argument("--days", type=int, default=100, help="days to simulate (default: %(default)s)")
     sub.add_argument("--seed", type=int, default=DEFAULT_SEED, help="random seed (default: %(default)s)")
@@ -250,11 +356,12 @@ def build_parser() -> argparse.ArgumentParser:
     from genesis.harness.monad import (
         MONAD_TESTNET_RPC_URL,
         cmd_anchor,
+        cmd_verify as cmd_monad_verify,
     )
 
     monad = commands.add_parser(
         "monad",
-        help="Monad Testnet: anchor a world digest on-chain",
+        help="Monad Testnet: anchor a world digest on-chain, or verify a transaction",
         description="Monad Testnet commands. Anchoring needs a funded key "
         "(GENESIS_MONAD_PRIVATE_KEY or --private-key) and a deployed GenesisLedger "
         "contract address; nothing here runs against mainnet.",
@@ -288,6 +395,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--cast", default="cast", help="cast executable for signing (default: %(default)s, found on PATH)"
     )
     anchor.set_defaults(handler=cmd_anchor)
+
+    # `genesis monad verify`: read-only proof of a transaction for judges —
+    # no key, no signing, no spending; exits 0 only on a success receipt.
+    verify = monad_actions.add_parser(
+        "verify",
+        help="show a human-readable proof of a Monad Testnet transaction (read-only)",
+    )
+    verify.add_argument("--tx", required=True, help="transaction hash, '0x' + 64 hex digits")
+    verify.add_argument(
+        "--rpc-url", default=MONAD_TESTNET_RPC_URL,
+        help="Monad Testnet RPC endpoint (default: %(default)s)",
+    )
+    verify.set_defaults(handler=cmd_monad_verify)
     return parser
 
 

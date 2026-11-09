@@ -10,7 +10,10 @@
    a uniform-price call auction, and trades settle.
 5. **Consumption** - residents consume their daily needs; unmet needs cost
    health, and a resident whose health reaches zero dies.
-6. **Bookkeeping** - daily statistics are recorded and invariants are checked.
+6. **Redistribution** - only when ``tax_rate_bps > 0``: every living resident
+   pays that share of their cash into a pool, and the pool is split equally
+   among the living. Money is conserved exactly.
+7. **Bookkeeping** - daily statistics are recorded and invariants are checked.
 
 Agents only propose. Every proposal is validated here, every accepted change is
 applied here, and every change to a balance is written to the event log.
@@ -91,6 +94,17 @@ class Simulation:
     every resident uses the rule-based policy. With ``check_invariants`` (the
     default) the state invariants are verified after every day and a violation
     raises :class:`~genesis.models.InvariantViolation` instead of continuing.
+
+    ``tax_rate_bps`` is a session policy, like the agents: a daily
+    redistribution tax on cash, in basis points (0 = off, 10_000 = 100 %).
+    Each day every living resident pays that share of their cash into a pool,
+    and the pool is split equally among the living. It lives on the
+    simulation rather than in the world config on purpose: the config is part
+    of the state digest, so a config field would change the digest of every
+    world including the golden seed-42 run — and that digest is already
+    anchored on Monad Testnet. As a session policy the tax leaves a
+    zero-tax run bit-for-bit identical to the golden run, while a taxed run
+    still changes the digest through its ``TAX`` events in the log.
     """
 
     def __init__(
@@ -99,10 +113,16 @@ class Simulation:
         agents: Mapping[str, Agent] | None = None,
         *,
         check_invariants: bool = True,
+        tax_rate_bps: int = 0,
     ) -> None:
         self.world = world
         self.agents: dict[str, Agent] = default_agents() if agents is None else dict(agents)
         self.check_invariants = check_invariants
+        if not isinstance(tax_rate_bps, int) or isinstance(tax_rate_bps, bool):
+            raise ValueError(f"tax_rate_bps must be an integer, got {tax_rate_bps!r}")
+        if not 0 <= tax_rate_bps <= 10_000:
+            raise ValueError(f"tax_rate_bps must be 0..10000, got {tax_rate_bps}")
+        self.tax_rate_bps = tax_rate_bps
         self.rules = Rules.from_config(world.config)
         missing = sorted({resident.policy for resident in world.residents} - set(self.agents))
         if missing:
@@ -124,6 +144,7 @@ class Simulation:
         produced, workers = self._produce(living, decisions)
         results, rejected_orders = self._trade(living, decisions)
         consumed, unmet, deaths = self._consume(living, decisions)
+        self._redistribute(world.living())
         stats = self._daily_stats(
             started=len(living),
             workers=workers,
@@ -332,7 +353,38 @@ class Simulation:
                 )
         return consumed, unmet, deaths
 
-    # --- phase 6: bookkeeping --------------------------------------------------
+    # --- phase 6: redistribution -------------------------------------------------
+
+    def _redistribute(self, living: Sequence[Resident]) -> None:
+        """Collect the daily cash tax and pay it back out equally.
+
+        A no-op when ``tax_rate_bps`` is 0, so the default world is bit-for-bit
+        identical to a world without this phase. The tax is computed from each
+        resident's cash at the start of the phase, so the order of residents
+        cannot change anyone's bill; the pool is then split with integer
+        division and the leftover cents go to the lowest-id residents, in
+        order, so the amount paid out always equals the amount collected.
+        Every resident's net change is recorded as one ``TAX`` event, which
+        the event-log audit replays.
+        """
+        world = self.world
+        rate = self.tax_rate_bps
+        if rate <= 0 or not living:
+            return
+        taxes = {resident.id: resident.cash * rate // 10_000 for resident in living}
+        pool = sum(taxes.values())
+        share, remainder = divmod(pool, len(living))
+        for index, resident in enumerate(living):
+            rebate = share + (1 if index < remainder else 0)
+            resident.cash += rebate - taxes[resident.id]
+            world.record(
+                EventKind.TAX,
+                resident_id=resident.id,
+                tax_paid=taxes[resident.id],
+                rebate=rebate,
+            )
+
+    # --- phase 7: bookkeeping --------------------------------------------------
 
     def _daily_stats(
         self,

@@ -68,6 +68,7 @@ class EventKind(enum.StrEnum):
     ORDER_REJECTED = "order_rejected"
     TRADE = "trade"
     MARKET_CLEARED = "market_cleared"
+    TAX = "tax"
     CONSUMPTION = "consumption"
     RESIDENT_DIED = "resident_died"
 
