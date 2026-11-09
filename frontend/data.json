@@ -1,0 +1,464 @@
+{
+  "meta": {
+    "source": "python main.py demo --seed 42 --days 100",
+    "generator": "frontend/generate_data.py",
+    "seed": 42,
+    "days": 100,
+    "residents": 20,
+    "version": "0.1.0",
+    "digest": "8ed4e8d7dd86fafc",
+    "full_digest": "8ed4e8d7dd86fafce0ec09064a239b599d0eb596f4588d69b249cbbd1ad201c6",
+    "events": 7649,
+    "invariants": "OK"
+  },
+  "trajectory": [
+    {
+      "day": 10,
+      "population": 20,
+      "prices": {
+        "food": 2.29,
+        "wood": 3.24,
+        "stone": 4.14
+      },
+      "trades": 40,
+      "units": 40,
+      "value": 126.15,
+      "health": 100.0,
+      "gini": 0.057
+    },
+    {
+      "day": 20,
+      "population": 20,
+      "prices": {
+        "food": 2.29,
+        "wood": 3.24,
+        "stone": 4.14
+      },
+      "trades": 40,
+      "units": 40,
+      "value": 126.15,
+      "health": 100.0,
+      "gini": 0.096
+    },
+    {
+      "day": 30,
+      "population": 20,
+      "prices": {
+        "food": 2.29,
+        "wood": 3.24,
+        "stone": 4.14
+      },
+      "trades": 40,
+      "units": 40,
+      "value": 126.15,
+      "health": 100.0,
+      "gini": 0.126
+    },
+    {
+      "day": 40,
+      "population": 20,
+      "prices": {
+        "food": 2.29,
+        "wood": 3.24,
+        "stone": 4.14
+      },
+      "trades": 40,
+      "units": 40,
+      "value": 126.15,
+      "health": 100.0,
+      "gini": 0.157
+    },
+    {
+      "day": 50,
+      "population": 20,
+      "prices": {
+        "food": 2.29,
+        "wood": 3.24,
+        "stone": 4.14
+      },
+      "trades": 39,
+      "units": 39,
+      "value": 122.01,
+      "health": 100.0,
+      "gini": 0.189
+    },
+    {
+      "day": 60,
+      "population": 20,
+      "prices": {
+        "food": 2.29,
+        "wood": 3.24,
+        "stone": 4.14
+      },
+      "trades": 38,
+      "units": 38,
+      "value": 119.67,
+      "health": 100.0,
+      "gini": 0.218
+    },
+    {
+      "day": 70,
+      "population": 20,
+      "prices": {
+        "food": 2.29,
+        "wood": 3.24,
+        "stone": 4.14
+      },
+      "trades": 38,
+      "units": 39,
+      "value": 122.01,
+      "health": 99.8,
+      "gini": 0.244
+    },
+    {
+      "day": 80,
+      "population": 20,
+      "prices": {
+        "food": 2.29,
+        "wood": 3.24,
+        "stone": 4.14
+      },
+      "trades": 37,
+      "units": 37,
+      "value": 113.73,
+      "health": 99.8,
+      "gini": 0.267
+    },
+    {
+      "day": 90,
+      "population": 20,
+      "prices": {
+        "food": 2.29,
+        "wood": 3.24,
+        "stone": 4.14
+      },
+      "trades": 39,
+      "units": 39,
+      "value": 122.91,
+      "health": 100.0,
+      "gini": 0.284
+    },
+    {
+      "day": 100,
+      "population": 20,
+      "prices": {
+        "food": 2.29,
+        "wood": 3.24,
+        "stone": 4.14
+      },
+      "trades": 38,
+      "units": 38,
+      "value": 119.72,
+      "health": 100.0,
+      "gini": 0.308
+    }
+  ],
+  "final": {
+    "day": 100,
+    "population": 20,
+    "dead": 0,
+    "occupations": {
+      "woodcutter": 7,
+      "miner": 8,
+      "farmer": 5
+    },
+    "prices": {
+      "food": 2.29,
+      "wood": 3.24,
+      "stone": 4.14
+    },
+    "holdings": {
+      "food": 147,
+      "wood": 169,
+      "stone": 176
+    },
+    "produced": {
+      "food": 2047,
+      "wood": 2069,
+      "stone": 2046
+    },
+    "consumed": {
+      "food": 2000,
+      "wood": 2000,
+      "stone": 1970
+    },
+    "money_supply": 2000.0,
+    "total_trades": 3867,
+    "total_units": 3890,
+    "total_value": 12350.97,
+    "events": 7649,
+    "digest": "8ed4e8d7dd86fafc",
+    "wealth": {
+      "mean": 180.64,
+      "median": 196.08,
+      "min": 46.89,
+      "max": 428.66,
+      "gini": 0.308,
+      "richest_10_pct": 20.1,
+      "poorest_50_pct": 26.8
+    },
+    "mean_health": 100.0
+  },
+  "residents": [
+    {
+      "id": 9,
+      "name": "Ulla",
+      "occupation": "woodcutter",
+      "health": 100,
+      "cash": 344.62,
+      "inventory": {
+        "food": 4,
+        "wood": 18,
+        "stone": 4
+      },
+      "wealth": 428.66
+    },
+    {
+      "id": 12,
+      "name": "Priya",
+      "occupation": "miner",
+      "health": 100,
+      "cash": 191.36,
+      "inventory": {
+        "food": 4,
+        "wood": 4,
+        "stone": 20
+      },
+      "wealth": 296.28
+    },
+    {
+      "id": 13,
+      "name": "Eshe",
+      "occupation": "miner",
+      "health": 100,
+      "cash": 181.83,
+      "inventory": {
+        "food": 4,
+        "wood": 4,
+        "stone": 20
+      },
+      "wealth": 286.75
+    },
+    {
+      "id": 6,
+      "name": "Dmitri",
+      "occupation": "miner",
+      "health": 100,
+      "cash": 174.4,
+      "inventory": {
+        "food": 4,
+        "wood": 4,
+        "stone": 18
+      },
+      "wealth": 271.04
+    },
+    {
+      "id": 20,
+      "name": "Wanjiru",
+      "occupation": "miner",
+      "health": 100,
+      "cash": 157.05,
+      "inventory": {
+        "food": 4,
+        "wood": 4,
+        "stone": 18
+      },
+      "wealth": 253.69
+    },
+    {
+      "id": 5,
+      "name": "Celine",
+      "occupation": "miner",
+      "health": 100,
+      "cash": 148.05,
+      "inventory": {
+        "food": 4,
+        "wood": 4,
+        "stone": 18
+      },
+      "wealth": 244.69
+    },
+    {
+      "id": 17,
+      "name": "Farid",
+      "occupation": "miner",
+      "health": 100,
+      "cash": 134.88,
+      "inventory": {
+        "food": 4,
+        "wood": 4,
+        "stone": 18
+      },
+      "wealth": 231.52
+    },
+    {
+      "id": 11,
+      "name": "Quentin",
+      "occupation": "farmer",
+      "health": 100,
+      "cash": 149.49,
+      "inventory": {
+        "food": 17,
+        "wood": 4,
+        "stone": 4
+      },
+      "wealth": 217.94
+    },
+    {
+      "id": 18,
+      "name": "Gael",
+      "occupation": "farmer",
+      "health": 100,
+      "cash": 145.53,
+      "inventory": {
+        "food": 18,
+        "wood": 4,
+        "stone": 4
+      },
+      "wealth": 216.27
+    },
+    {
+      "id": 16,
+      "name": "Kalani",
+      "occupation": "farmer",
+      "health": 100,
+      "cash": 127.87,
+      "inventory": {
+        "food": 18,
+        "wood": 4,
+        "stone": 4
+      },
+      "wealth": 198.61
+    },
+    {
+      "id": 4,
+      "name": "Omar",
+      "occupation": "miner",
+      "health": 100,
+      "cash": 88.63,
+      "inventory": {
+        "food": 4,
+        "wood": 4,
+        "stone": 20
+      },
+      "wealth": 193.55
+    },
+    {
+      "id": 19,
+      "name": "Kofi",
+      "occupation": "miner",
+      "health": 100,
+      "cash": 76.74,
+      "inventory": {
+        "food": 4,
+        "wood": 4,
+        "stone": 17
+      },
+      "wealth": 169.24
+    },
+    {
+      "id": 8,
+      "name": "Bilal",
+      "occupation": "woodcutter",
+      "health": 100,
+      "cash": 9.72,
+      "inventory": {
+        "food": 4,
+        "wood": 20,
+        "stone": 4
+      },
+      "wealth": 100.24
+    },
+    {
+      "id": 10,
+      "name": "Bram",
+      "occupation": "woodcutter",
+      "health": 100,
+      "cash": 18.81,
+      "inventory": {
+        "food": 4,
+        "wood": 17,
+        "stone": 4
+      },
+      "wealth": 99.61
+    },
+    {
+      "id": 1,
+      "name": "Hana",
+      "occupation": "woodcutter",
+      "health": 100,
+      "cash": 6.98,
+      "inventory": {
+        "food": 4,
+        "wood": 17,
+        "stone": 3
+      },
+      "wealth": 83.64
+    },
+    {
+      "id": 3,
+      "name": "Sven",
+      "occupation": "woodcutter",
+      "health": 100,
+      "cash": 10.37,
+      "inventory": {
+        "food": 4,
+        "wood": 18,
+        "stone": 0
+      },
+      "wealth": 77.85
+    },
+    {
+      "id": 14,
+      "name": "Idris",
+      "occupation": "woodcutter",
+      "health": 100,
+      "cash": 6.21,
+      "inventory": {
+        "food": 4,
+        "wood": 18,
+        "stone": 0
+      },
+      "wealth": 73.69
+    },
+    {
+      "id": 2,
+      "name": "Yara",
+      "occupation": "woodcutter",
+      "health": 100,
+      "cash": 7.48,
+      "inventory": {
+        "food": 3,
+        "wood": 17,
+        "stone": 0
+      },
+      "wealth": 69.43
+    },
+    {
+      "id": 15,
+      "name": "Jonas",
+      "occupation": "farmer",
+      "health": 100,
+      "cash": 9.73,
+      "inventory": {
+        "food": 19,
+        "wood": 0,
+        "stone": 0
+      },
+      "wealth": 53.24
+    },
+    {
+      "id": 7,
+      "name": "Mateo",
+      "occupation": "farmer",
+      "health": 100,
+      "cash": 10.25,
+      "inventory": {
+        "food": 16,
+        "wood": 0,
+        "stone": 0
+      },
+      "wealth": 46.89
+    }
+  ]
+}

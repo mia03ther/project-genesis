@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GENESIS — 同一个世界，可以被验证</title>
+<meta name="description" content="Project GENESIS：20 个居民的确定性文明模拟，100 天，3,867 笔交易，世界摘要锚定在 Monad Testnet 上。">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="loading">
+
+<!-- film grain, always on (0z5a language: hard ~2fps jitter) -->
+<div id="grain" aria-hidden="true"></div>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top"><span class="brand-mark">◆</span> GENESIS <span class="brand-ver">v0.1</span></a>
+    <nav class="nav-links">
+      <a href="#sim">模拟</a>
+      <a href="#digest">摘要</a>
+      <a href="#anchor">上链</a>
+      <a href="#world">世界</a>
+      <a href="#market">市场</a>
+      <a href="#people">居民</a>
+      <a href="#scenarios">任务</a>
+    </nav>
+    <span class="nav-note">Monad Blitz · 广州</span>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ============ HERO — exhibition, 45 / 55 ============ -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">DETERMINISTIC WORLD / SEED 42</div>
+      <h1 class="glitch" data-n="同一个世界，可以被验证。">同一个世界，<br>可以被验证。</h1>
+      <p class="hero-sub">
+        20 个居民，在一个小世界里生产、交易、消费。
+        同样的种子，永远是同一个世界 —— 而这个世界的摘要，
+        可以被锚定在 Monad 链上，任何人都能查证。
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="hero-play">▶ 播放模拟</button>
+        <a class="btn btn-ghost" href="#anchor">查看上链锚定</a>
+      </div>
+      <div class="hero-digest">
+        <span>世界摘要</span>
+        <span class="mono" id="hs-digest">8ed4e8d7dd86fafc</span>
+        <span class="ok">不变量审计通过</span>
+      </div>
+    </div>
+
+    <!-- dark simulation stage: breathes on its own, never follows the mouse -->
+    <div class="stage" id="stage">
+      <canvas id="world-stage" width="880" height="620" aria-label="世界舞台：20 位居民与基尼曲线随时间自主漂移"></canvas>
+      <div class="stage-top"><span>WORLD 001</span><span class="stage-live"><i></i> LIVE · DAY <b id="stage-day">100</b></span></div>
+      <div class="stage-stats">
+        <div class="sstat"><span class="sstat-num" id="hs-day">100</span><span class="sstat-label">天</span></div>
+        <div class="sstat"><span class="sstat-num" id="hs-pop">20</span><span class="sstat-label">居民 · 全部存活</span></div>
+        <div class="sstat"><span class="sstat-num" id="hs-trades">3,867</span><span class="sstat-label">累计交易</span></div>
+        <div class="sstat sstat-wide"><span class="sstat-label">SHA-256 WORLD DIGEST</span><span class="sstat-digest mono">8ed4e8d7dd86fafc…</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="cue" id="cue" aria-hidden="true"><span>向下滚动</span><i>⌄</i></div>
+
+  <!-- ============ SIMULATOR (first: the core experience) ============ -->
+  <section class="section reveal" id="sim">
+    <div class="section-head">
+      <p class="section-kicker">01 · 100 天模拟回放</p>
+      <h2>点一个时间点，看世界那天的样子</h2>
+      <p>每一个数字都来自真实运行的轨迹 —— 种子 42，第 10 天到第 100 天</p>
+    </div>
+    <div class="sim-stage">
+      <div class="sim-controls">
+        <div class="day-chips" id="day-chips"></div>
+        <button class="btn btn-primary btn-sm" id="btn-play">播放</button>
+      </div>
+      <div class="sim-body">
+        <div class="sim-left">
+          <div class="sim-day"><span id="sim-day-num">100</span><span class="sim-day-unit">天</span></div>
+          <div class="sim-rows" id="sim-rows"></div>
+        </div>
+        <div class="sim-right">
+          <div class="chart-title">基尼系数 · 贫富差距随时间的变化</div>
+          <canvas id="gini-chart" width="640" height="260"></canvas>
+          <div class="chart-note">第 10 天 0.057 → 第 100 天 0.308：没有出生、继承和资本，财富差距仍在缓慢拉大。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DETERMINISM + DIGEST ============ -->
+  <section class="section reveal" id="digest">
+    <div class="section-head">
+      <p class="section-kicker">02 · 确定性与世界摘要</p>
+      <h2>同样的种子，永远是同一个世界</h2>
+      <p>种子、规则、历史完全相同时，任何人在任何机器上跑出的摘要都一模一样 —— 所以它可以作为这个世界在链上的“指纹”。</p>
+    </div>
+    <ol class="steps">
+      <li><span class="step-num">01</span><div><h3>本地模拟</h3><p>Python 引擎每天跑一轮：生产、市场、消费，账目永远平衡。</p></div></li>
+      <li><span class="step-num">02</span><div><h3>世界摘要</h3><p>整个世界（含 7,649 条事件日志）算出一个 SHA-256 摘要。</p></div></li>
+      <li><span class="step-num">03</span><div><h3>Monad 上链</h3><p>摘要写进 Monad Testnet 的合约，任何人都能查到、验证。</p></div></li>
+    </ol>
+    <div class="digest-line">
+      <span class="digest-label">STATE DIGEST · DAY 100</span>
+      <span class="mono digest-value" id="digest-full">8ed4e8d7dd86fafce0ec09064a239b599d0eb596f4588d69b249cbbd1ad201c6</span>
+      <button class="btn btn-ghost btn-sm" id="btn-copy">复制摘要</button>
+    </div>
+  </section>
+
+  <!-- ============ ANCHOR ============ -->
+  <section class="section reveal" id="anchor">
+    <div class="section-head">
+      <p class="section-kicker">03 · Monad 锚定状态</p>
+      <h2>上链锚定</h2>
+      <p>世界摘要 → Monad Testnet · 这是这个项目和普通模拟器最大的不同</p>
+    </div>
+    <div class="anchor-panel">
+      <div class="anchor-left">
+        <div class="anchor-label">世界摘要 · STATE DIGEST <span class="badge badge-warn">待上链验证</span></div>
+        <p class="anchor-note">
+          这是第 100 天整个世界的 SHA-256 摘要（包含 7,649 条事件日志）。
+          锚定尚未发生：需要一个有测试网 MON 的钱包，把摘要写进 GenesisLedger 合约。
+          在那之前，这里不会出现绿色的“已验证”，也不会出现交易哈希。
+        </p>
+        <div class="anchor-steps">
+          <div class="anchor-step"><b>1</b><span>本地跑完 100 天模拟，算出摘要</span></div>
+          <div class="anchor-step"><b>2</b><span>调用 GenesisLedger 合约，把摘要写上 Monad Testnet</span></div>
+          <div class="anchor-step"><b>3</b><span>任何人用交易哈希在浏览器里查到这条记录</span></div>
+        </div>
+      </div>
+      <div class="anchor-right">
+        <div class="explorer-box">
+          <div class="explorer-label">MONAD EXPLORER</div>
+          <div class="explorer-empty">尚未上链 —— 交易哈希将在首次锚定成功后出现在这里</div>
+          <button class="btn btn-disabled" disabled>在 Monad Explorer 中查看（待上链）</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WORLD OVERVIEW (unboxed numbers) ============ -->
+  <section class="section reveal" id="world">
+    <div class="section-head">
+      <p class="section-kicker">04 · 世界总览</p>
+      <h2>第 100 天结束时的真实状态</h2>
+      <p>种子 42 · 数据来自 <code>main.py demo</code></p>
+    </div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+  </section>
+
+  <!-- ============ MARKET (unboxed rows) ============ -->
+  <section class="section reveal" id="market">
+    <div class="section-head">
+      <p class="section-kicker">05 · 世界经济</p>
+      <h2>市场</h2>
+      <p>第 100 天价格（credits / 单位）· 100 天里几乎没变</p>
+    </div>
+    <div class="market-list" id="market-grid"></div>
+    <div class="market-foot" id="market-foot"></div>
+  </section>
+
+  <!-- ============ RESIDENTS ============ -->
+  <section class="section reveal" id="people">
+    <div class="section-head">
+      <p class="section-kicker">06 · 居民</p>
+      <h2>居民</h2>
+      <p>第 100 天 · 按财富排序 · 财富 = 现金 + 库存按市价折算</p>
+    </div>
+    <div class="people-grid">
+      <div class="card occ-card">
+        <h3>职业分布</h3>
+        <div class="donut-wrap">
+          <div class="donut" id="donut"></div>
+          <div class="donut-center"><span id="donut-total">20</span><small>居民</small></div>
+        </div>
+        <ul class="legend" id="occ-legend"></ul>
+      </div>
+      <div class="card wealth-card">
+        <h3>财富分布</h3>
+        <div class="wealth-stats" id="wealth-stats"></div>
+        <table class="table" id="resident-table">
+          <thead><tr><th>#</th><th>居民</th><th>职业</th><th>健康</th><th>现金</th><th>财富</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button class="btn btn-ghost btn-sm" id="btn-more-residents">展开全部 20 人</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SCENARIOS ============ -->
+  <section class="section reveal" id="scenarios">
+    <div class="section-head">
+      <p class="section-kicker">07 · 场景任务</p>
+      <h2>场景任务</h2>
+      <p>版本化、可判分的 Web3 学习任务 · 同一套规则，判人和判 AI 完全一样</p>
+    </div>
+    <div class="scenario-grid">
+      <div class="card scenario-card">
+        <div class="sc-head"><h3>First Local Transfer</h3><span class="badge badge-ok">PASSED 13/13</span></div>
+        <p class="sc-desc">第一次本地链上转账：Alice 向 Bob 转 1.5 ether，8 条判分标准全部通过。</p>
+        <div class="sc-meta"><span>Anvil 本地链 · Chain 31337</span><span>约 15 分钟 · 初级</span></div>
+        <div class="sc-foot mono">anvil 1.9.0 · 报告 reports/first-local-transfer.json</div>
+      </div>
+      <div class="card scenario-card">
+        <div class="sc-head"><h3>First Monad Transfer</h3><span class="badge badge-warn">可离线验证 · 待上链</span></div>
+        <p class="sc-desc">同样的转账任务，跑在 Monad Testnet 上：真签名、真上链、历史永久公开、无法快照回滚。已实现并通过离线验证，待测试网实跑。</p>
+        <div class="sc-meta"><span>Monad Testnet · Chain 10143</span><span>约 20 分钟 · 初级</span></div>
+        <div class="sc-foot mono">1.5 MON · 13 分满分 · 需测试网钱包 + 水龙头 MON</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p><b>数据来源（全部真实，可复现）：</b><code>python main.py demo --seed 42 --days 100</code> ·
+    摘要 <span class="mono">8ed4e8d7dd86fafc</span> · 不变量审计通过 · 重新生成数据：<code>python frontend/generate_data.py</code></p>
+    <p>Project GENESIS v0.1 · 确定性文明模拟 + Web3 场景评测 · 为 Monad Blitz 而生</p>
+    <p class="footer-note">打开方式：<code>cd frontend &amp;&amp; python -m http.server</code> 后访问 http://localhost:8000，或直接双击 index.html。</p>
+  </footer>
+</main>
+
+<button id="top-btn" aria-label="回到顶部">↑</button>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
