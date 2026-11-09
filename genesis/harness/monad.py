@@ -44,7 +44,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
-from genesis.harness.chain import ChainError, RpcError, from_hex, require_loopback_url, to_hex
+from genesis.harness.chain import (
+    HARNESS_USER_AGENT,
+    ChainError,
+    RpcError,
+    from_hex,
+    require_loopback_url,
+    to_hex,
+)
 from genesis.harness.environment import AccountState, ScenarioSetupError
 from genesis.harness.manifest import ScenarioManifest
 from genesis.harness.runner import (
@@ -127,7 +134,9 @@ class PublicJsonRpcClient:
         )
         self._next_id += 1
         request = urllib.request.Request(
-            self.url, data=payload.encode("utf-8"), headers={"Content-Type": "application/json"}
+            self.url,
+            data=payload.encode("utf-8"),
+            headers={"Content-Type": "application/json", "User-Agent": HARNESS_USER_AGENT},
         )
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
@@ -212,6 +221,13 @@ class MonadChain:
             if time.monotonic() >= deadline:
                 raise ChainError(f"no receipt for {tx_hash} after {timeout} s")
             time.sleep(poll)
+
+    def receipt_once(self, tx_hash: str) -> dict[str, Any] | None:
+        """One receipt lookup, no waiting: ``None`` when the transaction is
+        unknown or not mined yet. ``cmd_verify`` uses this instead of the
+        polling :meth:`receipt`, so an unknown hash fails fast."""
+        result = self.rpc.call("eth_getTransactionReceipt", tx_hash)
+        return result if isinstance(result, dict) else None
 
     # -- loopback-only helpers (local test doubles; never a public node) ----------
 
@@ -625,3 +641,83 @@ def cmd_anchor(args: Any) -> int:
     print(f"  tx:       {tx_hash}")
     print(f"  explorer: {explorer_tx_url(tx_hash)}")
     return 0
+
+
+# --- `genesis monad verify` -----------------------------------------------------------
+
+_TX_HASH = re.compile(r"0x[0-9a-fA-F]{64}")
+
+_WEI_PER_MON = 10**18
+_WEI_PER_GWEI = 10**9
+
+
+def _format_mon(wei: int) -> str:
+    """Exact decimal MON for a wei amount, e.g. ``1500000000000000000 -> '1.5'``."""
+    whole, frac = divmod(wei, _WEI_PER_MON)
+    if frac == 0:
+        return str(whole)
+    return f"{whole}.{frac:018d}".rstrip("0")
+
+
+def _format_gwei(wei: int) -> str:
+    """Exact decimal Gwei for a wei amount, e.g. ``115000000000 -> '115'``."""
+    whole, frac = divmod(wei, _WEI_PER_GWEI)
+    if frac == 0:
+        return str(whole)
+    return f"{whole}.{frac:09d}".rstrip("0")
+
+
+def cmd_verify(args: Any) -> int:
+    """Verify a transaction on Monad Testnet, read-only.
+
+    Fetches the transaction and its receipt from the public RPC (no key, no
+    signing, no spending) and prints a human-readable proof. Exits 0 only
+    when the receipt status is success.
+    """
+    tx_hash = (args.tx or "").strip().lower()
+    if not _TX_HASH.fullmatch(tx_hash):
+        print("error: --tx must be a transaction hash: '0x' followed by 64 hex digits", flush=True)
+        return 1
+    rpc_url = args.rpc_url or MONAD_TESTNET_RPC_URL
+    try:
+        if is_loopback_url(rpc_url):
+            from genesis.harness.chain import JsonRpcClient
+
+            chain = MonadChain(JsonRpcClient(rpc_url))
+        else:
+            chain = MonadChain(PublicJsonRpcClient(rpc_url))
+        receipt = chain.receipt_once(tx_hash)
+        if receipt is None:
+            print(
+                f"error: no receipt for {tx_hash} on Monad Testnet (chain {MONAD_TESTNET_CHAIN_ID}): "
+                "the transaction is unknown or not mined yet",
+                flush=True,
+            )
+            return 1
+        transaction = chain.transaction(tx_hash)
+    except GenesisError as error:
+        print(f"error: cannot verify {tx_hash}: {error}", flush=True)
+        return 1
+    try:
+        value_wei = from_hex(transaction.get("value", "0x0"))
+        gas_used = from_hex(receipt.get("gasUsed", "0x0"))
+        gas_price_wei = from_hex(
+            receipt.get("effectiveGasPrice") or transaction.get("gasPrice") or "0x0"
+        )
+        block_number = from_hex(receipt.get("blockNumber", "0x0"))
+    except GenesisError as error:
+        print(f"error: the node returned a malformed receipt or transaction: {error}", flush=True)
+        return 1
+    fee_wei = gas_used * gas_price_wei
+    succeeded = receipt.get("status") in ("0x1", 1, "1")
+    print(f"Monad Testnet transaction {tx_hash} (chain {MONAD_TESTNET_CHAIN_ID})")
+    print(f"  from:       {transaction.get('from', '?')}")
+    print(f"  to:         {transaction.get('to', '?')}")
+    print(f"  value:      {_format_mon(value_wei)} MON ({value_wei} wei)")
+    print(f"  block:      {block_number}")
+    print(f"  status:     {'success' if succeeded else 'failed'}")
+    print(f"  gas used:   {gas_used}")
+    print(f"  gas price:  {_format_gwei(gas_price_wei)} Gwei")
+    print(f"  fee:        {_format_mon(fee_wei)} MON ({fee_wei} wei)")
+    print(f"  explorer:   {explorer_tx_url(tx_hash)}")
+    return 0 if succeeded else 1

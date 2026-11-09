@@ -36,6 +36,13 @@ class ChainError(GenesisError):
     """The local chain is unreachable, misbehaving, or not an allowed endpoint."""
 
 
+#: User-Agent sent on every JSON-RPC request the harness makes. Monad's RPC
+#: front door rejects requests carrying Python's default ``urllib`` agent
+#: (HTTP 403), while ``curl``/``cast`` work fine; identifying the client
+#: fixes that, and it costs nothing on a local Anvil node.
+HARNESS_USER_AGENT = "genesis-harness/1.0"
+
+
 class RpcError(ChainError):
     """The node answered a JSON-RPC call with an error."""
 
@@ -98,7 +105,9 @@ class JsonRpcClient:
             {"jsonrpc": "2.0", "id": next(self._ids), "method": method, "params": list(params)}
         )
         request = urllib.request.Request(
-            self.url, data=payload.encode("utf-8"), headers={"Content-Type": "application/json"}
+            self.url,
+            data=payload.encode("utf-8"),
+            headers={"Content-Type": "application/json", "User-Agent": HARNESS_USER_AGENT},
         )
         try:
             with self._opener.open(request, timeout=self.timeout) as response:
