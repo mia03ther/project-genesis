@@ -1,37 +1,110 @@
 # Project GENESIS
 
-**A deterministic, programmable civilization simulation.** v0.1 is the
-foundation: a small economy of 20 autonomous residents who produce, trade and
-consume food, wood and stone in a daily market. The engine is authoritative,
-every run is exactly reproducible from its seed, and the books always balance.
+**Civilisations rise and fall in 3 minutes — bet on the survivor; every
+epoch ends in a hash anyone can recompute.**
 
-Alongside it, the **scenario harness** (Phase 1) runs versioned Web3 learning
-scenarios on a private local Anvil chain and grades them deterministically. It
-starts with *First Local Blockchain Transfer*.
+**文明三分钟兴衰——押注幸存者；每个纪元都以一个任何人都能重算的哈希收尾。**
 
-It is written in plain Python 3.12 with only the standard library at runtime
-(SQLite included); `pytest` is the only development dependency. The harness
-additionally needs Foundry's `anvil` to run scenarios on a real local chain.
+**不是 GameFi —— 没有代币，没有投机。** *Not GameFi — no token, no
+speculation.* Bets are play-money points by default. There is no token, no
+real-money wagering, no earning mechanism. An optional real-testnet mode is
+clearly labelled and uses test MON only, on Monad Testnet, with a funded
+key — never by default, never with real money.
+
+GENESIS is a deterministic, programmable civilization simulation: a small
+economy of 20 autonomous residents who produce, trade and consume food,
+wood and stone in a daily market. The engine is authoritative, every run is
+exactly reproducible from its seed, and the books always balance. The
+**betting loop** turns that world into a game a stranger can play in 60
+seconds: one epoch is four civilisations racing in parallel — Aurora,
+Boreas, Cinder, Dune — each a real 60-day mini-world with 5 residents;
+before the epoch runs you bet play-money on the civilisation you think
+survives best; when the epoch ends, the bets settle in the open and the
+whole epoch hashes to one digest that anyone can recompute. See
+[docs/EPOCH_BETTING.md](docs/EPOCH_BETTING.md) for the loop design.
+
+Alongside it, the **scenario harness** (Phase 1) runs versioned Web3
+learning scenarios on a private local Anvil chain and grades them
+deterministically. It starts with *First Local Blockchain Transfer*.
+
+It is written in plain Python 3.12 with only the standard library at
+runtime (SQLite included); `pytest` is the only development dependency.
+The harness additionally needs Foundry's `anvil` to run scenarios on a
+real local chain.
+
+## Why this fits Monad Blitz
+
+A simulated world is cheap to run and worthless as a claim — anyone can
+say "my simulation did this". The chain turns the simulated world into a
+provable fact: one digest, anchored once, readable by anyone, forever.
+That is the entire job the chain does here, and it is the job a chain is
+for. The loop is small on purpose: one bet, one epoch, one hash — a judge
+can verify the whole thing in under a minute with one command and one
+explorer link.
+
+The Monad property the loop needs is **fast finality**: an epoch settles
+and the next one starts, so settlement must finalise quickly or the loop
+stalls between rounds. Monad's fast blocks and parallel execution give
+that finality — the anchor is one cheap write that confirms quickly, and
+many epochs can settle without queueing behind each other. The simulation
+stays off-chain and reproducible; Monad stores only the anchor.
+
+## The betting loop in 60 seconds
+
+No keys, no wallet, no network. From the repository root, one command
+runs an epoch with bets and prints the whole result as JSON:
+
+```bash
+python main.py epoch --bet you:2:100
+```
+
+1. **Bet.** Back a civilisation with play-money points
+   (演示积分 · 不是真钱), in integer cents: `--bet PLAYER:CIV:AMOUNT`,
+   repeatable — e.g. `--bet alice:2:100 --bet bob:0:100`. Civilisations
+   are 0 Aurora, 1 Boreas, 2 Cinder, 3 Dune.
+2. **Run the epoch.** Four 60-day mini-worlds run through the real engine
+   (civilisation `i` uses seed `epoch_seed × 1000 + i`). Default epoch
+   (`epoch:42:60:4:5:0:10`): all four end with 5 alive, and **Cinder wins**
+   with survival score 5,144,627 — Aurora 5,143,163, Boreas 5,144,121,
+   Dune 5,143,061. The winner rule is public: `alive × 1,000,000 +
+   wealth_cents + total_health × 100` — one extra survivor outweighs any
+   wealth gap. Ties are broken by the smallest
+   `SHA-256("genesis:epoch-winner:<epoch_digest>:<civ_id>")`, a pure
+   function of the digest.
+3. **Settle.** Parimutuel, house fee 0: winners split the whole pool in
+   proportion to stake (`stake × pool // winner_pool`, leftover cents to
+   the earliest winning bets, so payouts always sum to the pool exactly).
+   Verified example: 100 on Cinder and 100 on Aurora → pool 200, Cinder
+   wins, the Cinder bet pays 200. If nobody backed the winner, every stake
+   is refunded in full — nothing rolls over.
+4. **Verify.** The epoch ends in one digest — SHA-256 of canonical JSON
+   over the parameters plus each civilisation's id, name, seed, world
+   digest and score inputs. Re-run the same epoch and the digest must
+   match: default digest
+   `b25c8fb3e94f746bf4d29fd7118ecd0fb72b23b8386eda76b35830e00cfab9fc`.
+   The JavaScript port in `frontend/engine.js` reproduces it bit-for-bit
+   (`node frontend/verify_epochs.mjs`: 3/3 golden epochs, winner + payouts
+   identical).
+
+Change the seed and the winner changes — seed 43 → **Boreas** wins
+(digest `6561439a3eb4eb79`). Change a policy and the outcome changes too:
+`--max-orders 2` starves every civilisation (all 0 alive, all scores 0)
+and the winner is decided purely by the digest-hash tiebreak — **Dune**.
+That is why the bet is real: the worlds are deterministic, but nobody
+knows the outcome until the epoch runs. The browser playground runs the
+same engine — open it with `cd frontend && python -m http.server` — and
+`python main.py epoch --real-testnet` prints the verified Monad Testnet
+facts instead of running an epoch (it places no bet and claims no payout).
 
 ## Vision
 
 GENESIS is meant to grow into an AI-native world you can learn in and
-experiment with: a sandbox where autonomous agents, including language-model
-agents, live in a simulated economy; a research platform for studying those
-agents; and, ultimately, a gamified learning world for Web3. Knowledge about
-blockchains is fragmented and the entry barrier is high. GENESIS aims to turn it
-into a world to explore, combining a wiki, a visual knowledge map, interactive
-on-chain experiments and AI NPC mentors. Newcomers progress, level by level,
-from understanding what a blockchain is to writing, testing and securing smart
-contracts, and eventually build their own learning levels and simulated
-economic worlds.
-
-Every one of those ideas needs the same foundation: a world whose rules are
-explicit, whose state changes are validated and recorded, and whose history can
-be replayed exactly. **v0.1 builds only that foundation.** It has no tokens,
-wallets, smart contracts, blockchain nodes, graphics, multiplayer or live
-language-model agents, but the agent interface is designed so those can be
-added later without rewriting the engine (see [Agents](#agents-and-future-llm-adapters)).
+experiment with: a sandbox where autonomous agents, including
+language-model agents, live in a simulated economy; a research platform
+for studying those agents; and, ultimately, a gamified learning world for
+Web3. The betting loop is the first playable slice of that world — a
+small, sharp entry point that proves the pattern (playable world +
+recomputable proof) before anything bigger is built on it.
 
 ## Quick start (Windows PowerShell)
 
@@ -59,10 +132,11 @@ The commands call the virtual environment's Python directly, so no activation
 is needed. If you prefer to activate it (`.\.venv\Scripts\Activate.ps1`), the
 installed `genesis` command replaces `python main.py` everywhere below.
 
-## The demo
+## The demo — one epoch, end to end
 
-`python main.py demo` creates a fresh world (seed 42), simulates 100 days, audits
-the complete event log and prints the result:
+`python main.py demo` creates a fresh world (seed 42), simulates 100 days,
+audits the complete event log and prints the result. This is the same epoch
+the betting loop plays — the command-line twin of the browser playground:
 
 ```text
 Project GENESIS v0.1.0 demo: 20 residents, seed 42, 100 days
@@ -97,13 +171,20 @@ after 100 days gives `8ed4e8d7dd86fafc...` on every machine and every Python
 version tested (3.12, 3.13, 3.14), so it doubles as a reproducibility check. Try
 `demo --seed 7 --days 365` for a longer run.
 
-## Frontend
+## Frontend — the betting table
 
-There is a static, no-build-step dashboard in [`frontend/`](frontend/) —
-open it and you see the same seed-42, 100-day world: world overview, a
-day-by-day replay (Day 10 / 50 / 100 with a real Gini chart), the market,
-the residents ranked by wealth, and the on-chain anchor panel for the
-world digest.
+There is a static, no-build-step playground in [`frontend/`](frontend/):
+world overview, a day-by-day replay (Day 10 / 50 / 100 with a real Gini
+chart), the market, the residents ranked by wealth, and the on-chain
+anchor panel for the world digest. It runs the same engine in the browser
+— change the seed, the tax rate or the market, and the world recomputes
+with a new digest. Run the same parameters with `python main.py play`
+and the digest must match. The browser also implements the betting loop:
+`frontend/engine.js` carries the same epoch API as the Python engine
+(`runEpoch`, `deriveWinner`, `survivalScore`, `placeBet`, `settleEpoch`),
+verified against the Python implementation
+(`node frontend/verify_epochs.mjs`: 3/3 golden epochs, winner + payouts
+bit-for-bit; `node frontend/verify_engine.mjs`: 10/10 golden worlds).
 
 ```bash
 cd frontend
@@ -122,10 +203,11 @@ engine change:
 python frontend/generate_data.py   # rewrites frontend/data.json + data.js
 ```
 
-The anchor panel shows the digest and a clearly-marked "待上链验证"
-placeholder: no transaction hash or explorer link is shown until a real
-Monad Testnet anchoring has actually happened. (Screenshot: not included
-yet — open the page and take one.)
+The anchor panel shows the digest and the live anchor: contract
+`0x0D903C5f9ae82e52aA69D39068EF80B85fAFaBA1`, anchor transaction
+`0xd035cdda274104d6958300f0022562a3cebde1e3f370d49fe2061bcad5fc433f`,
+with explorer links. (Screenshot: not included yet — open the page and
+take one.)
 
 ## Command-line interface
 
@@ -143,6 +225,9 @@ python main.py report --format csv --table daily --output reports\daily.csv   # 
 python main.py verify                         # replay the whole event log and check every invariant
 python main.py reset                          # start over at day 0 (asks you to type 'reset'; --yes skips)
 python main.py demo --days 100 --seed 42      # in-memory demonstration
+python main.py play --seed 42 --days 100 --tax-bps 0 --max-orders 10   # one epoch: JSON summary with digest (the betting loop's CLI twin)
+python main.py epoch --bet alice:2:100 --bet bob:0:100   # run a betting epoch (play money) and settle it; --real-testnet prints the verified Monad facts instead
+python main.py monad verify --tx 0x...   # read-only: verify a Monad Testnet transaction, no key
 ```
 
 `advance` refuses to save a world whose invariants fail, and `reset` and `init`
@@ -240,10 +325,58 @@ test double or an `anvil` node started with `--chain-id 10143`, with no key:
 The contract `contracts/GenesisLedger.sol` compiles with Foundry 1.9.0
 (`cd contracts && forge build`).
 
-**What still needs a live run.** Nothing in this repository has been run against
-Monad Testnet yet — no live transaction, no deployed contract, no explorer link
-is claimed. A live run needs a funded key, which this repository does not
-contain:
+**What runs live, today.** The first live Monad Testnet transfer has
+happened and passed 13/13 (`first-monad-transfer`): 1.5 MON from
+`0xE705B6cDfDc682bE49bdDa177A695207ff67Bf35` to
+`0xEa3C22fE64eF4BfAf0fE58F49b7dF5fC5ABA3A09`, transaction
+`0x4b66b46fba5301e60452ae5d38c5e58e4f636302b7f80425777ef1a4355eae11`,
+block 78228932, fee 0.002415 MON (21,000 gas @ 115 Gwei). Sender
+5 → 3.497585 MON, receiver 0 → 1.5 MON. Verify it:
+https://testnet.monadexplorer.com/tx/0x4b66b46fba5301e60452ae5d38c5e58e4f636302b7f80425777ef1a4355eae11
+
+**Anchor: done, on-chain.** The `GenesisLedger` contract is deployed on
+Monad Testnet at `0x0D903C5f9ae82e52aA69D39068EF80B85fAFaBA1`
+(deployment tx
+`0xfc042b3927ea880c6517c1c6f20e458ef8b366cc6f1a8ca0dc0f9220e7170c00`),
+and the seed-42, 100-day world digest `0x8ed4e8d7dd86fafc…` is anchored in
+it (day 100, population 20, trades 3,867), anchor tx
+`0xd035cdda274104d6958300f0022562a3cebde1e3f370d49fe2061bcad5fc433f`:
+https://testnet.monadexplorer.com/tx/0xd035cdda274104d6958300f0022562a3cebde1e3f370d49fe2061bcad5fc433f
+
+Read it back yourself — no key, no spending:
+
+```bash
+cast call 0x0D903C5f9ae82e52aA69D39068EF80B85fAFaBA1 "getDigest(uint256)(bytes32)" 100 --rpc-url https://testnet-rpc.monad.xyz
+# 0x8ed4e8d7dd86fafce0ec09064a239b599d0eb596f4588d69b249cbbd1ad201c6
+```
+
+That value must equal the digest of a local `python main.py demo` run —
+that equality is the whole proof. To anchor a different world of your own:
+
+```bash
+python main.py monad anchor --digest 0x<your digest> --day 100 --population 20 --trades 3867 --contract 0x0D903C5f9ae82e52aA69D39068EF80B85fAFaBA1
+```
+
+**Hackathon demo.** For the Monad Blitz judge demo, follow the 60-second
+hands-on script in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) — bet,
+watch the epoch, settle, verify the digest on-chain — and the one-page
+pitch in [docs/PITCH_ONEPAGE.md](docs/PITCH_ONEPAGE.md). The loop design
+is in [docs/EPOCH_BETTING.md](docs/EPOCH_BETTING.md).
+
+**Live proof.** The first live Monad Testnet transfer passed 13/13
+(1.5 MON, tx
+`0x4b66b46fba5301e60452ae5d38c5e58e4f636302b7f80425777ef1a4355eae11`,
+block 78228932) and the seed-42, 100-day world digest is anchored in
+`GenesisLedger` (anchor tx
+`0xd035cdda274104d6958300f0022562a3cebde1e3f370d49fe2061bcad5fc433f`).
+Verify either read-only, with no key and no spending:
+`python main.py monad verify --tx 0x4b66b46fba5301e60452ae5d38c5e58e4f636302b7f80425777ef1a4355eae11`
+or `python main.py epoch --real-testnet`.
+The wallet holds 3.4323 MON after the transfer, the deploy and the
+anchor. Full test suite: 614 passed, 0 failed.
+
+**How to repeat the live run yourself.** A live run needs a funded key,
+which this repository does not contain:
 
 1. Get free test MON from the faucet: https://faucet.monad.xyz
 2. Put the key in the environment (never in a file, never on the command line
@@ -256,8 +389,7 @@ contain:
    `cd contracts && forge create --rpc-url https://testnet-rpc.monad.xyz --private-key "$GENESIS_MONAD_PRIVATE_KEY" GenesisLedger.sol:GenesisLedger`
    then `python main.py monad anchor --digest 0x<demo digest> --day 100 --population 20 --trades 3867 --contract 0x<deployed address>`
 
-The anchor prints the transaction hash and its explorer link
-(`https://testnet.monadexplorer.com/tx/<hash>`). Monad Testnet is chain id
+Monad Testnet is chain id
 10143, RPC `https://testnet-rpc.monad.xyz`. See `docs/HARNESS_ARCHITECTURE.md`
 for how the adapter differs from Anvil, and `contracts/README.md` for the
 deploy steps.
@@ -266,7 +398,10 @@ deploy steps.
 on Monad Testnet a world's digest is public and permanent. Anyone can re-run
 the same seed locally and check that their digest matches the anchored one —
 the chain becomes the proof that a particular world existed. That is the
-hackathon centrepiece: a deterministic world, anchored in public.
+hackathon centrepiece: a deterministic world, anchored in public. And the
+loop needs Monad's fast finality: an epoch settles and the next one starts,
+so settlement must finalise quickly — fast blocks and parallel execution
+give the loop that pace.
 
 
 ## How it works
@@ -312,7 +447,7 @@ is documented in **[docs/SAVE_FORMAT.md](docs/SAVE_FORMAT.md)**.
 | Save/load is lossless | Round trips preserve the digest; saving at day 50 and continuing equals an uninterrupted 100-day run |
 | The engine is authoritative | Tests with agents that raise, return garbage, overspend, oversell, thrash occupations or act randomly: everything invalid is rejected and logged, and the invariants hold |
 
-Run them with `python -m pytest` (about 430 tests, under 20 seconds).
+Run them with `python -m pytest` (614 tests, all passing).
 
 **Determinism in detail.** Randomness comes only from `random.Random` instances
 derived from `(seed, day, purpose)`, never from the global generator, so phases
@@ -407,14 +542,18 @@ Each step builds on the engine's guarantees rather than bypassing them.
 3. **Scenario harness:** more scenarios on the Phase 1 foundation (reading
    receipts, contract calls, events); a learner interface that acts as an
    `Actor`; the Monad Testnet adapter is done (signed transfers via `cast`,
-   `first-monad-transfer`, and the `GenesisLedger` anchor contract) — what
-   remains is a live run with a funded key; optional AI-agent evaluation by
-   adding model adapters as actors.
+   `first-monad-transfer`, and the `GenesisLedger` anchor contract) — the
+   first live transfer has run and passed 13/13 on Monad Testnet, the ledger
+   is deployed at `0x0D903C5f9ae82e52aA69D39068EF80B85fAFaBA1`, and the
+   seed-42 world digest is anchored in it (anchor tx
+   `0xd035cdda274104d6958300f0022562a3cebde1e3f370d49fe2061bcad5fc433f`);
+   optional AI-agent evaluation by adding model adapters as actors.
 4. **Learning world:** levels and quests as scripted scenarios, a knowledge map,
    and AI NPC mentors that explain what happens in the simulation.
-5. **Web3 layer:** simulated ledgers, tokens and contracts inside the sandbox,
+5. **Web3 layer:** simulated ledgers and contracts inside the sandbox,
    then interactive on-chain experiments on test networks, with security
-   lessons built in.
+   lessons built in. Still no token: the betting loop stays play-money,
+   with testnet mode optional and labelled.
 6. **Creation:** tools for players to build their own levels and economic worlds.
 
 ## License
