@@ -1,0 +1,497 @@
+[
+ {
+  "bets": [
+   {
+    "amount": 1000,
+    "civ": 0,
+    "epoch_id": "epoch:42:60:4:5:0:10",
+    "player": "alice"
+   },
+   {
+    "amount": 2500,
+    "civ": 1,
+    "epoch_id": "epoch:42:60:4:5:0:10",
+    "player": "bob"
+   },
+   {
+    "amount": 500,
+    "civ": 2,
+    "epoch_id": "epoch:42:60:4:5:0:10",
+    "player": "carol"
+   },
+   {
+    "amount": 10000,
+    "civ": 0,
+    "epoch_id": "epoch:42:60:4:5:0:10",
+    "player": "dan"
+   },
+   {
+    "amount": 750,
+    "civ": 3,
+    "epoch_id": "epoch:42:60:4:5:0:10",
+    "player": "alice"
+   },
+   {
+    "amount": 3000,
+    "civ": 2,
+    "epoch_id": "epoch:42:60:4:5:0:10",
+    "player": "bob"
+   }
+  ],
+  "epoch": {
+   "civs": [
+    {
+     "alive": 5,
+     "digest": "5cc5c15f8ac814d5d811c03211052243b6b9c7ab8c0d1282b8a250f14b90e1e7",
+     "health": 500,
+     "id": 0,
+     "name": "Aurora",
+     "score": 5143163,
+     "seed": 42000,
+     "trades": 581,
+     "units": 587,
+     "value": 185308,
+     "wealth": 93163
+    },
+    {
+     "alive": 5,
+     "digest": "f5240d801e4124c0c0273e9c5d6fdc777ab0b404eb2bc3cfa03dd7689ae71418",
+     "health": 500,
+     "id": 1,
+     "name": "Boreas",
+     "score": 5144121,
+     "seed": 42001,
+     "trades": 577,
+     "units": 585,
+     "value": 185857,
+     "wealth": 94121
+    },
+    {
+     "alive": 5,
+     "digest": "5c877da950f964e424fd66ad88f8aa86d14c75a7893d3d07915c6e7c5a82aadd",
+     "health": 500,
+     "id": 2,
+     "name": "Cinder",
+     "score": 5144627,
+     "seed": 42002,
+     "trades": 585,
+     "units": 590,
+     "value": 183912,
+     "wealth": 94627
+    },
+    {
+     "alive": 5,
+     "digest": "51ac5c9d8553880d634c785914851c9da712acc334bf747fe5875343c78b9659",
+     "health": 500,
+     "id": 3,
+     "name": "Dune",
+     "score": 5143061,
+     "seed": 42003,
+     "trades": 521,
+     "units": 555,
+     "value": 199879,
+     "wealth": 93061
+    }
+   ],
+   "currency": "play_credits",
+   "days": 60,
+   "digest": "b25c8fb3e94f746bf4d29fd7118ecd0fb72b23b8386eda76b35830e00cfab9fc",
+   "epoch_id": "epoch:42:60:4:5:0:10",
+   "max_orders_per_day": 10,
+   "num_civs": 4,
+   "play_money_note": "\u6f14\u793a\u79ef\u5206 \u00b7 \u4e0d\u662f\u771f\u94b1",
+   "residents_per_civ": 5,
+   "seed": 42,
+   "tax_rate_bps": 0,
+   "winner": 2,
+   "winner_name": "Cinder"
+  },
+  "label": "epoch seed 42, 60 days, 4 civs",
+  "settlement": {
+   "currency": "play_credits",
+   "epoch_id": "epoch:42:60:4:5:0:10",
+   "house_fee_cents": 0,
+   "loser_pool": 14250,
+   "outcome": "settled",
+   "payouts": [
+    {
+     "civ": 0,
+     "payout": 0,
+     "player": "alice",
+     "profit": -1000,
+     "stake": 1000
+    },
+    {
+     "civ": 1,
+     "payout": 0,
+     "player": "bob",
+     "profit": -2500,
+     "stake": 2500
+    },
+    {
+     "civ": 2,
+     "payout": 2536,
+     "player": "carol",
+     "profit": 2036,
+     "stake": 500
+    },
+    {
+     "civ": 0,
+     "payout": 0,
+     "player": "dan",
+     "profit": -10000,
+     "stake": 10000
+    },
+    {
+     "civ": 3,
+     "payout": 0,
+     "player": "alice",
+     "profit": -750,
+     "stake": 750
+    },
+    {
+     "civ": 2,
+     "payout": 15214,
+     "player": "bob",
+     "profit": 12214,
+     "stake": 3000
+    }
+   ],
+   "play_money_note": "\u6f14\u793a\u79ef\u5206 \u00b7 \u4e0d\u662f\u771f\u94b1",
+   "pool": 17750,
+   "rollover_cents": 0,
+   "winner": 2,
+   "winner_pool": 3500
+  }
+ },
+ {
+  "bets": [
+   {
+    "amount": 1000,
+    "civ": 0,
+    "epoch_id": "epoch:7:30:4:5:0:10",
+    "player": "alice"
+   },
+   {
+    "amount": 2500,
+    "civ": 1,
+    "epoch_id": "epoch:7:30:4:5:0:10",
+    "player": "bob"
+   },
+   {
+    "amount": 500,
+    "civ": 2,
+    "epoch_id": "epoch:7:30:4:5:0:10",
+    "player": "carol"
+   },
+   {
+    "amount": 10000,
+    "civ": 0,
+    "epoch_id": "epoch:7:30:4:5:0:10",
+    "player": "dan"
+   },
+   {
+    "amount": 750,
+    "civ": 3,
+    "epoch_id": "epoch:7:30:4:5:0:10",
+    "player": "alice"
+   },
+   {
+    "amount": 3000,
+    "civ": 2,
+    "epoch_id": "epoch:7:30:4:5:0:10",
+    "player": "bob"
+   }
+  ],
+  "epoch": {
+   "civs": [
+    {
+     "alive": 5,
+     "digest": "357ea3e3ba65d084f79582d35776622e9c4bd0562cbf526d2c12be1cca54b65d",
+     "health": 500,
+     "id": 0,
+     "name": "Aurora",
+     "score": 5144487,
+     "seed": 7000,
+     "trades": 275,
+     "units": 284,
+     "value": 94378,
+     "wealth": 94487
+    },
+    {
+     "alive": 5,
+     "digest": "fe578b94bcb135dbd59c6f50ec6f5a60aa42b0b9b5859c4600fc285dde5e177c",
+     "health": 500,
+     "id": 1,
+     "name": "Boreas",
+     "score": 5144917,
+     "seed": 7001,
+     "trades": 275,
+     "units": 283,
+     "value": 93494,
+     "wealth": 94917
+    },
+    {
+     "alive": 5,
+     "digest": "1bc96596d37c56178693d32543c38965ce82a60cfdb6d0fd51d6c97f158485ca",
+     "health": 500,
+     "id": 2,
+     "name": "Cinder",
+     "score": 5144502,
+     "seed": 7002,
+     "trades": 247,
+     "units": 277,
+     "value": 113675,
+     "wealth": 94502
+    },
+    {
+     "alive": 5,
+     "digest": "5df4d62587cbcf8954ce64ee07ca2ffb43e2eaf8331033fdb154e8adf06dee40",
+     "health": 500,
+     "id": 3,
+     "name": "Dune",
+     "score": 5147144,
+     "seed": 7003,
+     "trades": 240,
+     "units": 287,
+     "value": 136908,
+     "wealth": 97144
+    }
+   ],
+   "currency": "play_credits",
+   "days": 30,
+   "digest": "da4b8928f65ef015a7269c3bde713b3dcd85d9039f55d8bd8e95466333675a53",
+   "epoch_id": "epoch:7:30:4:5:0:10",
+   "max_orders_per_day": 10,
+   "num_civs": 4,
+   "play_money_note": "\u6f14\u793a\u79ef\u5206 \u00b7 \u4e0d\u662f\u771f\u94b1",
+   "residents_per_civ": 5,
+   "seed": 7,
+   "tax_rate_bps": 0,
+   "winner": 3,
+   "winner_name": "Dune"
+  },
+  "label": "epoch seed 7, 30 days, 4 civs",
+  "settlement": {
+   "currency": "play_credits",
+   "epoch_id": "epoch:7:30:4:5:0:10",
+   "house_fee_cents": 0,
+   "loser_pool": 17000,
+   "outcome": "settled",
+   "payouts": [
+    {
+     "civ": 0,
+     "payout": 0,
+     "player": "alice",
+     "profit": -1000,
+     "stake": 1000
+    },
+    {
+     "civ": 1,
+     "payout": 0,
+     "player": "bob",
+     "profit": -2500,
+     "stake": 2500
+    },
+    {
+     "civ": 2,
+     "payout": 0,
+     "player": "carol",
+     "profit": -500,
+     "stake": 500
+    },
+    {
+     "civ": 0,
+     "payout": 0,
+     "player": "dan",
+     "profit": -10000,
+     "stake": 10000
+    },
+    {
+     "civ": 3,
+     "payout": 17750,
+     "player": "alice",
+     "profit": 17000,
+     "stake": 750
+    },
+    {
+     "civ": 2,
+     "payout": 0,
+     "player": "bob",
+     "profit": -3000,
+     "stake": 3000
+    }
+   ],
+   "play_money_note": "\u6f14\u793a\u79ef\u5206 \u00b7 \u4e0d\u662f\u771f\u94b1",
+   "pool": 17750,
+   "rollover_cents": 0,
+   "winner": 3,
+   "winner_pool": 750
+  }
+ },
+ {
+  "bets": [
+   {
+    "amount": 1000,
+    "civ": 0,
+    "epoch_id": "epoch:123:90:4:5:0:10",
+    "player": "alice"
+   },
+   {
+    "amount": 2500,
+    "civ": 1,
+    "epoch_id": "epoch:123:90:4:5:0:10",
+    "player": "bob"
+   },
+   {
+    "amount": 500,
+    "civ": 2,
+    "epoch_id": "epoch:123:90:4:5:0:10",
+    "player": "carol"
+   },
+   {
+    "amount": 10000,
+    "civ": 0,
+    "epoch_id": "epoch:123:90:4:5:0:10",
+    "player": "dan"
+   },
+   {
+    "amount": 750,
+    "civ": 3,
+    "epoch_id": "epoch:123:90:4:5:0:10",
+    "player": "alice"
+   },
+   {
+    "amount": 3000,
+    "civ": 2,
+    "epoch_id": "epoch:123:90:4:5:0:10",
+    "player": "bob"
+   }
+  ],
+  "epoch": {
+   "civs": [
+    {
+     "alive": 5,
+     "digest": "9abf179a2ffa35dc159e3b5da04ddd0ad68a1cda608af23bd3387841eb8754a8",
+     "health": 500,
+     "id": 0,
+     "name": "Aurora",
+     "score": 5144238,
+     "seed": 123000,
+     "trades": 837,
+     "units": 878,
+     "value": 313836,
+     "wealth": 94238
+    },
+    {
+     "alive": 5,
+     "digest": "38aae6a31a8b895d50817bfea08bd6c82c6e8ad38e76f5cd06898709aace6a9e",
+     "health": 497,
+     "id": 1,
+     "name": "Boreas",
+     "score": 5156323,
+     "seed": 123001,
+     "trades": 671,
+     "units": 801,
+     "value": 691244,
+     "wealth": 106623
+    },
+    {
+     "alive": 3,
+     "digest": "c13cb1c97380333fdc01b7634f3dfd3beb7552dfe90c6d3a11bab50a2fe39ad7",
+     "health": 300,
+     "id": 2,
+     "name": "Cinder",
+     "score": 3115806,
+     "seed": 123002,
+     "trades": 527,
+     "units": 646,
+     "value": 625420,
+     "wealth": 85806
+    },
+    {
+     "alive": 5,
+     "digest": "18209fffbf0f874a1b464927850938ea426b8a49010c752f6eeced3ff26035eb",
+     "health": 500,
+     "id": 3,
+     "name": "Dune",
+     "score": 5143363,
+     "seed": 123003,
+     "trades": 854,
+     "units": 879,
+     "value": 294504,
+     "wealth": 93363
+    }
+   ],
+   "currency": "play_credits",
+   "days": 90,
+   "digest": "96abef94ce84096494a5a3fd6b3508c7e480b26cce0d87d64b0f571261f9b5da",
+   "epoch_id": "epoch:123:90:4:5:0:10",
+   "max_orders_per_day": 10,
+   "num_civs": 4,
+   "play_money_note": "\u6f14\u793a\u79ef\u5206 \u00b7 \u4e0d\u662f\u771f\u94b1",
+   "residents_per_civ": 5,
+   "seed": 123,
+   "tax_rate_bps": 0,
+   "winner": 1,
+   "winner_name": "Boreas"
+  },
+  "label": "epoch seed 123, 90 days, 4 civs",
+  "settlement": {
+   "currency": "play_credits",
+   "epoch_id": "epoch:123:90:4:5:0:10",
+   "house_fee_cents": 0,
+   "loser_pool": 15250,
+   "outcome": "settled",
+   "payouts": [
+    {
+     "civ": 0,
+     "payout": 0,
+     "player": "alice",
+     "profit": -1000,
+     "stake": 1000
+    },
+    {
+     "civ": 1,
+     "payout": 17750,
+     "player": "bob",
+     "profit": 15250,
+     "stake": 2500
+    },
+    {
+     "civ": 2,
+     "payout": 0,
+     "player": "carol",
+     "profit": -500,
+     "stake": 500
+    },
+    {
+     "civ": 0,
+     "payout": 0,
+     "player": "dan",
+     "profit": -10000,
+     "stake": 10000
+    },
+    {
+     "civ": 3,
+     "payout": 0,
+     "player": "alice",
+     "profit": -750,
+     "stake": 750
+    },
+    {
+     "civ": 2,
+     "payout": 0,
+     "player": "bob",
+     "profit": -3000,
+     "stake": 3000
+    }
+   ],
+   "play_money_note": "\u6f14\u793a\u79ef\u5206 \u00b7 \u4e0d\u662f\u771f\u94b1",
+   "pool": 17750,
+   "rollover_cents": 0,
+   "winner": 1,
+   "winner_pool": 2500
+  }
+ }
+]

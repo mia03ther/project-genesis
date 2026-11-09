@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from genesis.harness.chain import JsonRpcClient
+from genesis.harness.chain import HARNESS_USER_AGENT, JsonRpcClient
 from genesis.harness.manifest import (
     ManifestError,
     load_manifest,
@@ -33,6 +33,7 @@ from genesis.harness.monad import (
     MonadRunner,
     PublicJsonRpcClient,
     cmd_anchor,
+    cmd_verify,
     explorer_tx_url,
     run_monad_scenario,
 )
@@ -234,3 +235,119 @@ def test_anchor_never_prints_the_key(monkeypatch, capsys) -> None:
     assert cmd_anchor(_anchor_args()) == 1
     captured = capsys.readouterr()
     assert DUMMY_KEY not in captured.out and DUMMY_KEY not in captured.err
+
+
+# --- User-Agent: Monad's RPC front door rejects Python's default agent (HTTP 403) ---
+
+
+def test_public_client_sends_user_agent() -> None:
+    """PublicJsonRpcClient identifies itself instead of sending ``Python-urllib``."""
+    node = FakeAnvil(chain_id=10143)
+    with FakeAnvilServer(node) as server:
+        # The public client only accepts https:// URLs, so build one pointed
+        # at the loopback test double without going through __init__; the
+        # request itself is still a real HTTP round-trip to the fake node.
+        client = object.__new__(PublicJsonRpcClient)
+        client.url = server.url
+        client.timeout = 5.0
+        client._next_id = 1
+        assert client.call("web3_clientVersion") == node.client_version
+    assert node.last_request_headers.get("user-agent") == HARNESS_USER_AGENT == "genesis-harness/1.0"
+
+
+def test_json_rpc_client_sends_user_agent() -> None:
+    """The local client sends the same User-Agent on its requests."""
+    node = FakeAnvil(chain_id=10143)
+    with FakeAnvilServer(node) as server:
+        assert JsonRpcClient(server.url).call("web3_clientVersion") == node.client_version
+    assert node.last_request_headers.get("user-agent") == HARNESS_USER_AGENT == "genesis-harness/1.0"
+
+
+# --- `genesis monad verify` -----------------------------------------------------------
+
+#: Verified fields of the first LIVE Monad Testnet transfer (2026-11-09).
+#: Also recorded in reports/first-monad-transfer-live.json.
+LIVE_TX = "0x4b66b46fba5301e60452ae5d38c5e58e4f636302b7f80425777ef1a4355eae11"
+LIVE_FROM = "0xE705B6cDfDc682bE49bdDa177A695207ff67Bf35"
+LIVE_TO = "0xEa3C22fE64eF4BfAf0fE58F49b7dF5fC5ABA3A09"
+LIVE_BLOCK = 78_228_932
+LIVE_VALUE_WEI = 1_500_000_000_000_000_000
+LIVE_GAS_PRICE_WEI = 115_000_000_000
+
+
+def _seed_live_tx(node: FakeAnvil, *, status: str = "0x1") -> None:
+    node.transactions[LIVE_TX] = {
+        "hash": LIVE_TX,
+        "from": LIVE_FROM,
+        "to": LIVE_TO,
+        "value": hex(LIVE_VALUE_WEI),
+        "gasPrice": hex(LIVE_GAS_PRICE_WEI),
+        "gas": hex(21_000),
+        "nonce": "0x0",
+        "blockNumber": hex(LIVE_BLOCK),
+    }
+    node.receipts[LIVE_TX] = {
+        "transactionHash": LIVE_TX,
+        "status": status,
+        "gasUsed": hex(21_000),
+        "effectiveGasPrice": hex(LIVE_GAS_PRICE_WEI),
+        "blockNumber": hex(LIVE_BLOCK),
+        "blockHash": "0x" + "cc" * 32,
+    }
+
+
+def _verify_args(tx: str, rpc_url: str) -> argparse.Namespace:
+    return argparse.Namespace(tx=tx, rpc_url=rpc_url)
+
+
+def test_verify_live_transfer_prints_proof_and_exits_zero(capsys) -> None:
+    node = FakeAnvil(chain_id=10143)
+    _seed_live_tx(node)
+    with FakeAnvilServer(node) as server:
+        assert cmd_verify(_verify_args(LIVE_TX, server.url)) == 0
+    out = capsys.readouterr().out
+    assert LIVE_FROM in out and LIVE_TO in out
+    assert "1.5 MON" in out and "1500000000000000000 wei" in out
+    assert str(LIVE_BLOCK) in out
+    assert "success" in out
+    assert "21000" in out and "115 Gwei" in out
+    assert "0.002415 MON" in out and "2415000000000000 wei" in out
+    assert explorer_tx_url(LIVE_TX) in out
+
+
+def test_verify_rejects_a_malformed_tx_hash(capsys) -> None:
+    assert cmd_verify(_verify_args("not-a-hash", "http://127.0.0.1:8545")) == 1
+    assert "64 hex digits" in capsys.readouterr().out
+
+
+def test_verify_tx_not_found(capsys) -> None:
+    node = FakeAnvil(chain_id=10143)
+    with FakeAnvilServer(node) as server:
+        assert cmd_verify(_verify_args(LIVE_TX, server.url)) == 1
+    assert "no receipt" in capsys.readouterr().out
+
+
+def test_verify_failed_receipt_exits_nonzero(capsys) -> None:
+    node = FakeAnvil(chain_id=10143)
+    _seed_live_tx(node, status="0x0")
+    with FakeAnvilServer(node) as server:
+        assert cmd_verify(_verify_args(LIVE_TX, server.url)) == 1
+    assert "failed" in capsys.readouterr().out
+
+
+def test_verify_unreachable_rpc_is_an_error(capsys) -> None:
+    assert cmd_verify(_verify_args(LIVE_TX, "http://127.0.0.1:1")) == 1
+    assert "error:" in capsys.readouterr().out
+
+
+def test_live_transfer_fixture_matches_the_receipt() -> None:
+    """The checked-in fixture's arithmetic must hold: fee = gas x gas price."""
+    fixture = json.loads((REPO / "reports" / "first-monad-transfer-live.json").read_text())
+    tx = fixture["transaction"]
+    assert tx["hash"] == LIVE_TX and tx["from"] == LIVE_FROM and tx["to"] == LIVE_TO
+    assert tx["block_number"] == LIVE_BLOCK and tx["status"] == "success"
+    assert int(tx["value_wei"]) == LIVE_VALUE_WEI and tx["value_mon"] == "1.5"
+    assert tx["gas_used"] * int(tx["gas_price_wei"]) == int(tx["fee_wei"])
+    assert tx["fee_mon"] == "0.002415"
+    assert tx["explorer_tx_url"] == explorer_tx_url(LIVE_TX)
+    assert fixture["summary"] == {"score": 13, "max_score": 13, "pass_threshold": 13}
