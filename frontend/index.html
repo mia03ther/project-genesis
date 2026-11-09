@@ -3,172 +3,354 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GENESIS — 同一个世界，可以被验证</title>
-<meta name="description" content="Project GENESIS：20 个居民的确定性文明模拟，100 天，3,867 笔交易，世界摘要锚定在 Monad Testnet 上。">
+<title>GENESIS — 文明 3 分钟兴衰 · 押注幸存者</title>
+<meta name="description" content="Project GENESIS 押注游戏：4 个文明在浏览器里并行演化 100 天，谁活下来谁就赢。演示积分，不是真钱；每一局的摘要都可以在 Monad Testnet 上验证。">
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body class="loading">
-
-<!-- film grain, always on (0z5a language: hard ~2fps jitter) -->
-<div id="grain" aria-hidden="true"></div>
+<body>
 
 <header class="nav">
   <div class="nav-inner">
-    <a class="brand" href="#top"><span class="brand-mark">◆</span> GENESIS <span class="brand-ver">v0.1</span></a>
+    <a class="brand" href="#top"><span class="brand-mark">◆</span> GENESIS</a>
+    <span class="brand-sub">押注幸存者 · Monad Blitz</span>
     <nav class="nav-links">
-      <a href="#sim">模拟</a>
-      <a href="#digest">摘要</a>
-      <a href="#anchor">上链</a>
-      <a href="#world">世界</a>
-      <a href="#market">市场</a>
-      <a href="#people">居民</a>
-      <a href="#scenarios">任务</a>
+      <a href="#game">对局</a>
+      <a href="#proof">链上证明</a>
+      <a href="#play">试玩</a>
+      <a href="#town-sec">小镇</a>
+      <a href="#learn">四课</a>
     </nav>
-    <span class="nav-note">Monad Blitz · 广州</span>
+    <span class="nav-note">Monad Testnet · Chain 10143</span>
   </div>
 </header>
 
 <main id="top">
-  <!-- ============ HERO — exhibition, 45 / 55 ============ -->
-  <section class="hero">
-    <div class="hero-left">
-      <div class="hero-eyebrow">DETERMINISTIC WORLD / SEED 42</div>
-      <h1 class="glitch" data-n="同一个世界，可以被验证。">同一个世界，<br>可以被验证。</h1>
-      <p class="hero-sub">
-        20 个居民，在一个小世界里生产、交易、消费。
-        同样的种子，永远是同一个世界 —— 而这个世界的摘要，
-        可以被锚定在 Monad 链上，任何人都能查证。
-      </p>
-      <div class="hero-actions">
-        <button class="btn btn-primary" id="hero-play">▶ 播放模拟</button>
-        <a class="btn btn-ghost" href="#anchor">查看上链锚定</a>
-      </div>
-      <div class="hero-digest">
-        <span>世界摘要</span>
-        <span class="mono" id="hs-digest">8ed4e8d7dd86fafc</span>
-        <span class="ok">不变量审计通过</span>
-      </div>
-    </div>
 
-    <!-- dark simulation stage: breathes on its own, never follows the mouse -->
-    <div class="stage" id="stage">
-      <canvas id="world-stage" width="880" height="620" aria-label="世界舞台：20 位居民与基尼曲线随时间自主漂移"></canvas>
-      <div class="stage-top"><span>WORLD 001</span><span class="stage-live"><i></i> LIVE · DAY <b id="stage-day">100</b></span></div>
-      <div class="stage-stats">
-        <div class="sstat"><span class="sstat-num" id="hs-day">100</span><span class="sstat-label">天</span></div>
-        <div class="sstat"><span class="sstat-num" id="hs-pop">20</span><span class="sstat-label">居民 · 全部存活</span></div>
-        <div class="sstat"><span class="sstat-num" id="hs-trades">3,867</span><span class="sstat-label">累计交易</span></div>
-        <div class="sstat sstat-wide"><span class="sstat-label">SHA-256 WORLD DIGEST</span><span class="sstat-digest mono">8ed4e8d7dd86fafc…</span></div>
+  <!-- ============ GAME — first screen = the game ============ -->
+  <section class="game" id="game">
+    <div class="game-inner">
+      <p class="eyebrow"><span class="dot-live"></span> LIVE · MONAD TESTNET · <span class="play-money" data-play-money>演示积分 · 不是真钱</span></p>
+      <h1>文明 3 分钟兴衰 —— <em>押注幸存者。</em></h1>
+      <p class="hero-en">Four civilisations race in parallel for 60 days. Bet on the one that survives.</p>
+      <p class="hero-note">Aurora、 Boreas、 Cinder、 Dune 四个文明并行演化 60 天，每文明 5 位居民。得分 = 存活 × 1,000,000 + 总财富（分）+ 总健康 × 100，得分最高者胜出；种子 42 那一局是 Cinder 赢了。</p>
+
+      <div class="game-controls">
+        <button class="btn btn-play btn-hero" id="btn-start-epoch">▶&nbsp; 开始一局</button>
+        <button class="btn btn-ghost btn-hero" id="btn-pause-epoch" disabled>⏸ 暂停</button>
+        <label class="ctl ctl-inline"><span>种子 Seed</span><input type="number" id="game-seed" value="42" min="0" max="1000000000" step="1"></label>
+        <label class="ctl ctl-inline"><span>天数 Days <b class="ctl-val" id="game-days-val">60</b></span><input type="range" id="game-days" min="30" max="90" step="1" value="60"></label>
+        <div class="speed-group" role="group" aria-label="速度">
+          <button class="btn btn-ghost btn-sm speed-btn on" data-speed="1">1× · 3 分钟</button>
+          <button class="btn btn-ghost btn-sm speed-btn" data-speed="2">2× · 90 秒</button>
+          <button class="btn btn-ghost btn-sm speed-btn" data-speed="6">6× · 30 秒</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btn-reset-balance">重置积分</button>
+      </div>
+      <p class="game-note" id="game-note">点「开始一局」：先下注，封盘后 4 条文明赛道并行开跑，每 3 秒演化一天，60 天后结算 —— 赢家分走整个底池（庄家抽成 0）。</p>
+
+      <!-- status bar -->
+      <div class="game-status">
+        <div class="gs-item"><span>你的余额</span><b class="mono" id="game-balance">1,000</b><small>演示积分</small></div>
+        <div class="gs-item"><span>第几局</span><b class="mono" id="game-epoch-no">1</b><small>EPOCH</small></div>
+        <div class="gs-item"><span>阶段</span><b id="game-phase">投注中 · 封盘前可下注</b><small id="game-phase-sub">Proposed → Voted → Finalized</small></div>
+        <div class="gs-item"><span>本局倒计时</span><b class="mono" id="game-timer">03:00</b><small id="game-day">Day 0 / 60</small></div>
+      </div>
+      <div class="day-track"><div class="day-fill" id="game-day-bar" style="width:0%"></div></div>
+
+      <!-- lifecycle: Proposed -> Voted -> Finalized -->
+      <ol class="lifecycle" id="game-lifecycle">
+        <li data-step="proposed" class="done"><b>1</b><span>Proposed<br><small>本局已提议</small></span></li>
+        <li data-step="voted"><b>2</b><span>Voted · 封盘<br><small>投注截止</small></span></li>
+        <li data-step="running"><b>3</b><span>Running<br><small>60 天演化</small></span></li>
+        <li data-step="finalized"><b>4</b><span>Finalized · 已敲定<br><small>摘要可验证</small></span></li>
+      </ol>
+
+      <!-- civ lanes: the race -->
+      <div class="lanes" id="game-lanes"></div>
+
+      <!-- betting -->
+      <div class="bet-grid">
+        <div class="bet-slip card">
+          <h3>下注单 <span class="play-money" data-play-money>演示积分 · 不是真钱</span></h3>
+          <p class="bet-selected">押注对象：<b id="bet-civ-name">点一条赛道选文明</b></p>
+          <div class="amt-chips">
+            <button class="btn btn-ghost btn-sm amt-chip" data-amt="50">50</button>
+            <button class="btn btn-ghost btn-sm amt-chip" data-amt="100">100</button>
+            <button class="btn btn-ghost btn-sm amt-chip" data-amt="200">200</button>
+            <button class="btn btn-ghost btn-sm amt-chip" data-amt="all">全部</button>
+            <label class="amt-custom"><input type="number" id="bet-amount" value="100" min="10" step="10"> 积分</label>
+          </div>
+          <p class="bet-preview" id="bet-preview">选一个文明和金额，这里会显示：若它赢，你预计拿回多少。</p>
+          <button class="btn btn-primary" id="btn-place-bet">确认下注</button>
+          <p class="bet-error" id="bet-error"></p>
+          <div class="my-bets">
+            <h4>我的投注</h4>
+            <ul id="game-bets"><li class="dim">还没下注 —— 封盘前都可以下注、撤注。</li></ul>
+          </div>
+          <p class="pool-note" id="game-pool">底池 = 全部投注之和 · 庄家抽成 0 · 赢家按投注比例分走整个总池；没人押中胜者则全额退款。</p>
+        </div>
+        <div class="feed card">
+          <h3>本局动态 · Lifecycle Feed</h3>
+          <ol class="feed-list" id="game-feed"></ol>
+        </div>
+      </div>
+
+      <!-- settlement -->
+      <div class="settle-panel" id="settle-panel" hidden>
+        <div class="settle-head">
+          <span class="badge badge-ok" id="settle-badge">● 已敲定 Finalized</span>
+          <span class="settle-epoch" id="settle-epoch-label"></span>
+        </div>
+        <h2 id="settle-winner"></h2>
+        <p id="settle-summary"></p>
+        <p class="settle-check" id="settle-check"></p>
+        <div class="table-scroll"><table class="table" id="settle-table">
+          <thead><tr><th>#</th><th>文明</th><th class="num">存活</th><th class="num">总健康</th><th class="num">总财富</th><th class="num">得分</th><th class="num">交易</th><th class="num">世界摘要</th></tr></thead>
+          <tbody id="settle-rows"></tbody>
+        </table></div>
+        <div class="settle-payouts" id="settle-payouts"></div>
+        <div class="pg-digest">
+          <span class="digest-label">EPOCH DIGEST · 本局摘要</span>
+          <span class="mono digest-value" id="settle-digest"></span>
+          <button class="btn btn-ghost btn-sm" id="btn-copy-settle-digest">复制摘要</button>
+        </div>
+        <p class="settle-note" id="settle-note"></p>
+        <button class="btn btn-play" id="btn-next-epoch">▶ 再来一局</button>
+      </div>
+
+      <!-- leaderboard -->
+      <div class="board-grid">
+        <div class="card">
+          <h3>排行榜 · 文明胜场</h3>
+          <table class="table"><thead><tr><th>文明</th><th class="num">胜场</th><th class="num">参赛</th><th class="num">最佳存活</th><th class="num">最佳得分</th></tr></thead>
+          <tbody id="leaderboard-body"></tbody></table>
+        </div>
+        <div class="card">
+          <h3>我的战绩</h3>
+          <div class="wealth-stats" id="player-stats"></div>
+          <p class="board-note">胜负规则（每局相同，写死在引擎里）：<b>得分 = 存活人口 × 1,000,000 + 总财富（分）+ 总健康 × 100</b>。人口占绝对主导；分数相同按摘要哈希决出胜者，与机器无关。赔率 = 总池 ÷ 该文明池，赢家按投注比例分走整个总池 —— 派彩之和永远等于总池；没人押中胜者则全额退款，什么都不滚存。</p>
+        </div>
+      </div>
+
+      <!-- live on-chain proof strip -->
+      <div class="proof-card">
+        <div class="proof-card-head">
+          <span class="badge badge-ok">● 已上链 · 真实交易</span>
+          <span class="proof-chain" data-chain-text="chain-name">Monad Testnet · Chain 10143</span>
+        </div>
+        <div class="proof-rows">
+          <div class="proof-row"><span>合约 GenesisLedger</span><a class="mono proof-hash" data-chain-href="contract-address" href="#" target="_blank" rel="noopener"><span data-chain-text="contract-address">加载中…</span> ↗</a></div>
+          <div class="proof-row"><span>锚定交易</span><a class="mono proof-hash" data-chain-href="anchor-tx" href="#" target="_blank" rel="noopener"><span data-chain-text="anchor-tx">加载中…</span> ↗</a></div>
+          <div class="proof-row"><span>真实转账</span><span><a class="mono proof-hash" data-chain-href="live-tx" href="#" target="_blank" rel="noopener"><span data-chain-text="live-tx">加载中…</span> ↗</a><span class="proof-dim"> · 区块 <span data-chain-text="live-block">…</span> · <span data-chain-text="live-amount">…</span> · 手续费 <span data-chain-text="live-fee">…</span> · 13/13 通过</span></span></div>
+        </div>
+        <div class="cast-box">
+          <div class="cast-label">只读验证 · 不需要钱包，不花一分钱</div>
+          <code class="mono cast-cmd" id="cast-cmd" data-chain-text="cast-cmd">加载中…</code>
+          <button class="btn btn-ghost btn-sm" id="btn-copy-cast">复制命令</button>
+        </div>
+        <p class="proof-card-note">上面这个命令返回的摘要，必须以 <code class="mono" data-chain-text="anchor-digest-short">…</code> 开头 —— 和种子 42 的世界摘要一字不差。游戏里的投注和派彩只是演示积分，<b>从不伪造上链记录</b>：想把一局的摘要真的锚定上链，看下面的「锚定你的世界」，用你自己的钱包操作。</p>
       </div>
     </div>
   </section>
 
-  <div class="cue" id="cue" aria-hidden="true"><span>向下滚动</span><i>⌄</i></div>
-
-  <!-- ============ SIMULATOR (first: the core experience) ============ -->
-  <section class="section reveal" id="sim">
-    <div class="section-head">
-      <p class="section-kicker">01 · 100 天模拟回放</p>
-      <h2>点一个时间点，看世界那天的样子</h2>
-      <p>每一个数字都来自真实运行的轨迹 —— 种子 42，第 10 天到第 100 天</p>
+  <!-- ============ STRIP ============ -->
+  <section class="strip">
+    <div class="strip-inner">
+      <span class="strip-item"><b>60</b> 天 / 局</span>
+      <span class="strip-item"><b>5</b> 居民 / 文明</span>
+      <span class="strip-item"><b>Cinder</b> 赢了种子 42 那局</span>
+      <span class="strip-item"><b>0.057 → 0.308</b> 基尼系数</span>
+      <span class="strip-item"><b data-chain-text="anchor-digest-short">…</b> 锚定摘要</span>
+      <span class="strip-item strip-item-ok"><b>13/13</b> 真实转账已通过</span>
     </div>
-    <div class="sim-stage">
-      <div class="sim-controls">
-        <div class="day-chips" id="day-chips"></div>
-        <button class="btn btn-primary btn-sm" id="btn-play">播放</button>
-      </div>
-      <div class="sim-body">
-        <div class="sim-left">
-          <div class="sim-day"><span id="sim-day-num">100</span><span class="sim-day-unit">天</span></div>
-          <div class="sim-rows" id="sim-rows"></div>
+  </section>
+
+  <!-- ============ PLAYGROUND — the interactive core ============ -->
+  <section class="section" id="play">
+    <div class="section-head">
+      <p class="section-kicker">试玩 · PLAYGROUND</p>
+      <h2>改一个参数，世界就变了 —— 摘要也跟着变</h2>
+      <p>下面每一个数字都是在你的浏览器里实时算出来的。改税率、改市场、换种子，点“运行这个世界”，摘要立刻重新算一遍。</p>
+    </div>
+
+    <div class="pg-panel">
+      <div class="pg-controls">
+        <label class="ctl"><span>种子 Seed</span><input type="number" id="in-seed" value="42" min="0" max="999999" step="1"></label>
+        <label class="ctl"><span>天数 Days <b class="ctl-val" id="in-days-val">100</b></span><input type="range" id="in-days" min="10" max="365" step="1" value="100"></label>
+        <label class="ctl"><span>居民 Residents <b class="ctl-val" id="in-res-val">20</b></span><input type="range" id="in-residents" min="5" max="40" step="1" value="20"></label>
+        <label class="ctl"><span>税率 Tax <b class="ctl-val" id="in-tax-val">0%</b></span><input type="range" id="in-tax" min="0" max="20" step="1" value="0"></label>
+        <label class="ctl"><span>市场订单 / 天 Orders <b class="ctl-val" id="in-orders-val">10</b></span><input type="range" id="in-orders" min="0" max="10" step="1" value="10"></label>
+        <div class="pg-buttons">
+          <button class="btn btn-primary" id="btn-run">运行这个世界</button>
+          <button class="btn btn-ghost" id="btn-rerun">再算一次</button>
         </div>
-        <div class="sim-right">
-          <div class="chart-title">基尼系数 · 贫富差距随时间的变化</div>
+      </div>
+      <p class="pg-status" id="pg-status"></p>
+      <p class="pg-rerun" id="rerun-result"></p>
+      <div class="callout" id="pg-callout-tax" hidden></div>
+      <div class="callout callout-dead" id="pg-callout-dead" hidden></div>
+
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <div class="pg-digest">
+        <span class="digest-label">WORLD DIGEST · 当前世界</span>
+        <span class="mono digest-value" id="pg-digest-full"></span>
+        <button class="btn btn-ghost btn-sm" id="btn-copy-digest">复制摘要</button>
+      </div>
+      <p class="pg-anchor-line" id="pg-anchor-line"></p>
+
+      <div class="pg-grid">
+        <div>
+          <div class="chart-title">基尼系数 · 随时间的变化</div>
           <canvas id="gini-chart" width="640" height="260"></canvas>
-          <div class="chart-note">第 10 天 0.057 → 第 100 天 0.308：没有出生、继承和资本，财富差距仍在缓慢拉大。</div>
+          <div class="chart-note" id="pg-chart-note"></div>
+        </div>
+        <div>
+          <div class="chart-title">逐日账本 · 每一天的交易</div>
+          <div class="table-scroll"><table class="table" id="traj-table">
+            <thead><tr><th>天</th><th class="num">交易</th><th class="num">单位</th><th class="num">成交额</th><th class="num">健康</th><th class="num">基尼</th><th class="num">人口</th></tr></thead>
+            <tbody id="traj-body"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <div class="pg-grid">
+        <div>
+          <div class="chart-title">最富的 5 个人</div>
+          <table class="table"><thead><tr><th>#</th><th>居民</th><th>职业</th><th class="num">财富</th></tr></thead><tbody id="rank-top"></tbody></table>
+        </div>
+        <div>
+          <div class="chart-title">最穷的 5 个人</div>
+          <table class="table"><thead><tr><th>#</th><th>居民</th><th>职业</th><th class="num">财富</th></tr></thead><tbody id="rank-bottom"></tbody></table>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ============ DETERMINISM + DIGEST ============ -->
-  <section class="section reveal" id="digest">
+  <!-- ============ COMPARE ============ -->
+  <section class="section" id="compare">
     <div class="section-head">
-      <p class="section-kicker">02 · 确定性与世界摘要</p>
-      <h2>同样的种子，永远是同一个世界</h2>
-      <p>种子、规则、历史完全相同时，任何人在任何机器上跑出的摘要都一模一样 —— 所以它可以作为这个世界在链上的“指纹”。</p>
+      <p class="section-kicker">对比 · COMPARE</p>
+      <h2>同一套代码，不同的世界 —— 全部确定</h2>
+      <p>把当前世界存为 A 或 B，或者一键跑两组对照。摘要相同就是同一个世界，不同就是另一个世界，没有含糊。</p>
     </div>
-    <ol class="steps">
-      <li><span class="step-num">01</span><div><h3>本地模拟</h3><p>Python 引擎每天跑一轮：生产、市场、消费，账目永远平衡。</p></div></li>
-      <li><span class="step-num">02</span><div><h3>世界摘要</h3><p>整个世界（含 7,649 条事件日志）算出一个 SHA-256 摘要。</p></div></li>
-      <li><span class="step-num">03</span><div><h3>Monad 上链</h3><p>摘要写进 Monad Testnet 的合约，任何人都能查到、验证。</p></div></li>
-    </ol>
-    <div class="digest-line">
-      <span class="digest-label">STATE DIGEST · DAY 100</span>
-      <span class="mono digest-value" id="digest-full">8ed4e8d7dd86fafce0ec09064a239b599d0eb596f4588d69b249cbbd1ad201c6</span>
-      <button class="btn btn-ghost btn-sm" id="btn-copy">复制摘要</button>
+    <div class="compare-panel">
+      <div class="compare-controls">
+        <button class="btn btn-primary btn-sm" id="btn-save-a">保存当前世界为 A</button>
+        <button class="btn btn-primary btn-sm" id="btn-save-b">保存当前世界为 B</button>
+        <button class="btn btn-ghost btn-sm" id="btn-preset-seeds">种子 42 vs 种子 43</button>
+        <button class="btn btn-ghost btn-sm" id="btn-preset-tax">税 0% vs 税 10%</button>
+      </div>
+      <p class="compare-note" id="compare-note">先保存两个世界，或点一个预设，表格就会出现。</p>
+      <div class="table-scroll"><table class="table compare-table" id="compare-table" hidden>
+        <thead><tr><th>指标</th><th id="compare-label-a">A</th><th id="compare-label-b">B</th></tr></thead>
+        <tbody id="compare-body"></tbody>
+      </table></div>
     </div>
   </section>
 
-  <!-- ============ ANCHOR ============ -->
-  <section class="section reveal" id="anchor">
+  <!-- ============ ANCHOR YOUR WORLD ============ -->
+  <section class="section" id="anchor-your">
     <div class="section-head">
-      <p class="section-kicker">03 · Monad 锚定状态</p>
-      <h2>上链锚定</h2>
-      <p>世界摘要 → Monad Testnet · 这是这个项目和普通模拟器最大的不同</p>
+      <p class="section-kicker">锚定你的世界 · ANCHOR · 真实测试网操作</p>
+      <h2>这个世界是你的 —— 想上链，就三步</h2>
+      <p>下面是当前试玩世界的摘要。页面永远不会问你要私钥、助记词或密码；上链需要你自己的钱包和一点测试 MON。游戏里的投注只是演示积分，和上链无关。</p>
     </div>
     <div class="anchor-panel">
       <div class="anchor-left">
-        <div class="anchor-label">世界摘要 · STATE DIGEST <span class="badge badge-warn">待上链验证</span></div>
-        <p class="anchor-note">
-          这是第 100 天整个世界的 SHA-256 摘要（包含 7,649 条事件日志）。
-          锚定尚未发生：需要一个有测试网 MON 的钱包，把摘要写进 GenesisLedger 合约。
-          在那之前，这里不会出现绿色的“已验证”，也不会出现交易哈希。
-        </p>
+        <div class="anchor-label">当前世界的摘要 <span id="ay-badge"></span></div>
+        <p class="mono digest-value" id="ay-digest" style="margin:14px 0 6px"></p>
+        <p class="anchor-note" id="ay-state"></p>
         <div class="anchor-steps">
-          <div class="anchor-step"><b>1</b><span>本地跑完 100 天模拟，算出摘要</span></div>
-          <div class="anchor-step"><b>2</b><span>调用 GenesisLedger 合约，把摘要写上 Monad Testnet</span></div>
-          <div class="anchor-step"><b>3</b><span>任何人用交易哈希在浏览器里查到这条记录</span></div>
+          <div class="anchor-step done"><b>1</b><span>领测试 MON：打开 <a data-chain-href="faucet" href="#" target="_blank" rel="noopener">faucet.monad.xyz</a>，免费领 Monad 测试网代币。</span></div>
+          <div class="anchor-step done"><b>2</b><span>用已部署的合约：<code class="mono" data-chain-text="contract-address">加载中…</code>，不需要重新部署。</span></div>
+          <div class="anchor-step done"><b>3</b><span>在你的终端里运行下面的命令 —— 摘要已经按当前世界填好了，复制就能用。</span></div>
         </div>
       </div>
       <div class="anchor-right">
         <div class="explorer-box">
-          <div class="explorer-label">MONAD EXPLORER</div>
-          <div class="explorer-empty">尚未上链 —— 交易哈希将在首次锚定成功后出现在这里</div>
-          <button class="btn btn-disabled" disabled>在 Monad Explorer 中查看（待上链）</button>
+          <div class="explorer-label">ANCHOR COMMAND · 锚定命令</div>
+          <code class="mono cast-cmd" id="ay-cmd"></code>
+          <button class="btn btn-primary btn-sm" id="btn-copy-ay-cmd" style="margin-top:14px">复制锚定命令</button>
+          <p class="anchor-note" style="margin:14px 0 0">这条命令只发一笔写摘要的交易。私钥只存在你自己的钱包里，永远不会经过这个页面。</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ============ WORLD OVERVIEW (unboxed numbers) ============ -->
-  <section class="section reveal" id="world">
+  <!-- ============ LIVING TOWN (secondary) ============ -->
+  <section class="section" id="town-sec">
     <div class="section-head">
-      <p class="section-kicker">04 · 世界总览</p>
-      <h2>第 100 天结束时的真实状态</h2>
-      <p>种子 42 · 数据来自 <code>main.py demo</code></p>
+      <p class="section-kicker">小镇 · LIVING TOWN</p>
+      <h2>一座活着的小镇</h2>
+      <p>居民在田地、森林、矿山和集市之间行走 —— 走的是当前这个世界的轨迹和居民名单。换个参数再运行，小镇里的人也会跟着变。</p>
     </div>
-    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="town-wrap">
+      <canvas id="town" width="1280" height="720" aria-label="一座活着的小镇：居民在住宅、田地、森林、矿山和集市之间行走，白天与黑夜交替"></canvas>
+      <div class="town-hud">
+        <span id="town-clock">☀ DAY 100 · 正午</span>
+        <span>基尼 <b class="mono" id="town-gini">0.308</b></span>
+        <span>当日交易 <b class="mono" id="town-trades">38</b></span>
+        <span>人口 <b class="mono" id="town-pop">20</b></span>
+        <button class="btn btn-ghost btn-sm" id="btn-town">⏸ 暂停小镇</button>
+      </div>
+    </div>
   </section>
 
-  <!-- ============ MARKET (unboxed rows) ============ -->
-  <section class="section reveal" id="market">
+  <!-- ============ LIVE PROOF (secondary) ============ -->
+  <section class="section" id="proof">
     <div class="section-head">
-      <p class="section-kicker">05 · 世界经济</p>
+      <p class="section-kicker">链上证明 · 真实交易</p>
+      <h2>这不是演示数据，这是一笔真的转账</h2>
+      <p>First Monad Transfer 场景在 Monad Testnet 上真实执行并通过 13/13 判分。下面每一个字段都可以在浏览器里查到。</p>
+    </div>
+    <div class="proof-panel">
+      <div class="proof-head">
+        <span class="badge badge-ok">● 已上链 · PASSED 13/13</span>
+        <span class="proof-chain" data-chain-text="chain-name">Monad Testnet · Chain 10143</span>
+      </div>
+      <div class="proof-grid">
+        <div class="proof-main">
+          <div class="proof-row"><span>交易哈希</span><a class="mono proof-hash" data-chain-href="live-tx" href="#" target="_blank" rel="noopener"><span data-chain-text="live-tx">加载中…</span> ↗</a></div>
+          <div class="proof-row"><span>区块</span><b class="mono" data-chain-text="live-block">…</b></div>
+          <div class="proof-row"><span>发送方</span><span class="mono" data-chain-text="live-from">…</span></div>
+          <div class="proof-row"><span>接收方</span><span class="mono" data-chain-text="live-to">…</span></div>
+          <div class="proof-row"><span>金额</span><b data-chain-text="live-amount">…</b></div>
+          <div class="proof-row"><span>手续费</span><b data-chain-text="live-fee">…</b><span class="proof-dim">21,000 gas @ 115 Gwei</span></div>
+        </div>
+        <div class="proof-balances">
+          <h3>转账前后余额</h3>
+          <table class="table">
+            <thead><tr><th>账户</th><th class="num">之前</th><th class="num">之后</th></tr></thead>
+            <tbody>
+              <tr><td>发送方</td><td class="num">5 MON</td><td class="num">3.497585 MON</td></tr>
+              <tr><td>接收方 Bob</td><td class="num">0 MON</td><td class="num">1.5 MON</td></tr>
+            </tbody>
+          </table>
+          <p class="proof-note">5 − 1.5 − 0.002415 = 3.497585，账目对得上。</p>
+          <a class="btn btn-primary" data-chain-href="live-tx" href="#" target="_blank" rel="noopener">在 Monad Explorer 中查看 ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MARKET + RESIDENTS (secondary) ============ -->
+  <section class="section" id="market">
+    <div class="section-head">
+      <p class="section-kicker">世界经济 · 当前世界</p>
       <h2>市场</h2>
-      <p>第 100 天价格（credits / 单位）· 100 天里几乎没变</p>
+      <p id="market-sub">最后一天的价格（credits / 单位）· 跟着上面的试玩参数一起变</p>
     </div>
     <div class="market-list" id="market-grid"></div>
     <div class="market-foot" id="market-foot"></div>
   </section>
 
-  <!-- ============ RESIDENTS ============ -->
-  <section class="section reveal" id="people">
+  <section class="section" id="people">
     <div class="section-head">
-      <p class="section-kicker">06 · 居民</p>
+      <p class="section-kicker">居民 · 当前世界</p>
       <h2>居民</h2>
-      <p>第 100 天 · 按财富排序 · 财富 = 现金 + 库存按市价折算</p>
+      <p id="people-sub">按财富排序 · 财富 = 现金 + 库存按市价折算</p>
     </div>
     <div class="people-grid">
       <div class="card occ-card">
@@ -183,42 +365,48 @@
         <h3>财富分布</h3>
         <div class="wealth-stats" id="wealth-stats"></div>
         <table class="table" id="resident-table">
-          <thead><tr><th>#</th><th>居民</th><th>职业</th><th>健康</th><th>现金</th><th>财富</th></tr></thead>
+          <thead><tr><th>#</th><th>居民</th><th>职业</th><th>健康</th><th class="num">现金</th><th class="num">财富</th></tr></thead>
           <tbody></tbody>
         </table>
-        <button class="btn btn-ghost btn-sm" id="btn-more-residents">展开全部 20 人</button>
+        <button class="btn btn-ghost btn-sm" id="btn-more-residents">展开全部</button>
       </div>
     </div>
   </section>
 
-  <!-- ============ SCENARIOS ============ -->
-  <section class="section reveal" id="scenarios">
+  <!-- ============ TEACHING (secondary, tightened) ============ -->
+  <section class="section" id="learn">
     <div class="section-head">
-      <p class="section-kicker">07 · 场景任务</p>
-      <h2>场景任务</h2>
-      <p>版本化、可判分的 Web3 学习任务 · 同一套规则，判人和判 AI 完全一样</p>
+      <p class="section-kicker">四课 · 这个世界教会你的事</p>
+      <h2>四分钟，读懂这个模拟</h2>
     </div>
-    <div class="scenario-grid">
-      <div class="card scenario-card">
-        <div class="sc-head"><h3>First Local Transfer</h3><span class="badge badge-ok">PASSED 13/13</span></div>
-        <p class="sc-desc">第一次本地链上转账：Alice 向 Bob 转 1.5 ether，8 条判分标准全部通过。</p>
-        <div class="sc-meta"><span>Anvil 本地链 · Chain 31337</span><span>约 15 分钟 · 初级</span></div>
-        <div class="sc-foot mono">anvil 1.9.0 · 报告 reports/first-local-transfer.json</div>
-      </div>
-      <div class="card scenario-card">
-        <div class="sc-head"><h3>First Monad Transfer</h3><span class="badge badge-warn">可离线验证 · 待上链</span></div>
-        <p class="sc-desc">同样的转账任务，跑在 Monad Testnet 上：真签名、真上链、历史永久公开、无法快照回滚。已实现并通过离线验证，待测试网实跑。</p>
-        <div class="sc-meta"><span>Monad Testnet · Chain 10143</span><span>约 20 分钟 · 初级</span></div>
-        <div class="sc-foot mono">1.5 MON · 13 分满分 · 需测试网钱包 + 水龙头 MON</div>
-      </div>
+    <ol class="lessons">
+      <li><span class="lesson-num">1</span><div><h3>确定性是可以被验证的承诺</h3><p>种子 42 + 同一套规则 = 同一个世界。摘要就是证据：换一台机器重跑，摘要必须一字不差。上面“再算一次”就是现场证明。</p></div></li>
+      <li><span class="lesson-num">2</span><div><h3>钱不会凭空出现，也不会消失</h3><p>货币供给恒定 2,000 credits。每一笔交易都有买有卖，账目永远平衡 —— 把订单上限调到 0 试试：没交易，钱还在，人先饿死了。</p></div></li>
+      <li><span class="lesson-num">3</span><div><h3>不平等会自己长出来</h3><p>没有出生、没有继承、没有资本，基尼系数还是从 0.057 爬到了 0.308。把税率拉到 10% 再跑一次：差距会被税收回去。</p></div></li>
+      <li><span class="lesson-num">4</span><div><h3>链是证明，不是数据库</h3><p>模拟留在链下、可复现；链上只存一个摘要。便宜、快速，而且诚实 —— 链只负责证明“这个世界存在过”，不负责替它算账。</p></div></li>
+    </ol>
+  </section>
+
+  <!-- ============ DETERMINISM NOTE ============ -->
+  <section class="section" id="repro">
+    <div class="section-head">
+      <p class="section-kicker">复现 · REPRODUCE</p>
+      <h2>在你自己的电脑上，重跑同一个世界</h2>
+      <p>浏览器里的引擎和 Python 引擎是同一套规则。下面这条命令的参数跟着上面的试玩实时变 —— 跑完，摘要必须和页面上的一字不差。</p>
     </div>
+    <div class="digest-line">
+      <code class="mono digest-value" id="py-cmd"></code>
+      <button class="btn btn-ghost btn-sm" id="btn-copy-py">复制命令</button>
+    </div>
+    <p class="verify-line">种子 42 默认值：<code>python main.py play --seed 42 --days 100 --tax-bps 0 --max-orders 10</code> → 摘要 <code class="mono"><span data-chain-text="anchor-digest-short">…</span>…</code>。对不上，说明引擎被改动了。</p>
   </section>
 
   <footer class="footer">
-    <p><b>数据来源（全部真实，可复现）：</b><code>python main.py demo --seed 42 --days 100</code> ·
-    摘要 <span class="mono">8ed4e8d7dd86fafc</span> · 不变量审计通过 · 重新生成数据：<code>python frontend/generate_data.py</code></p>
-    <p>Project GENESIS v0.1 · 确定性文明模拟 + Web3 场景评测 · 为 Monad Blitz 而生</p>
-    <p class="footer-note">打开方式：<code>cd frontend &amp;&amp; python -m http.server</code> 后访问 http://localhost:8000，或直接双击 index.html。</p>
+    <p><b>数据来源（全部真实，可复现）：</b><code>python main.py play --seed 42 --days 100 --tax-bps 0 --max-orders 10</code> ·
+    摘要 <span class="mono" data-chain-text="anchor-digest-short">…</span> · 不变量审计通过 · 浏览器引擎 <code>frontend/engine.js</code> 与 Python 引擎逐字验证一致（10/10 黄金世界）。押注只接引擎的标准接口（runEpoch / deriveWinner / survivalScore / placeBet / settleEpoch），黄金 epoch 3/3 通过（<code>node frontend/verify_epochs.mjs</code>），下注 → 60 天演化 → 结算，派彩之和等于总池。</p>
+    <p>链上证明：Monad Testnet 转账 <a class="mono" data-chain-href="live-tx" href="#" target="_blank" rel="noopener"><span data-chain-text="live-tx-short">…</span></a> · 区块 <span data-chain-text="live-block">…</span> · 摘要锚定 <a class="mono" data-chain-href="anchor-tx" href="#" target="_blank" rel="noopener"><span data-chain-text="anchor-tx-short">…</span></a> · 合约 <a class="mono" data-chain-href="contract-address" href="#" target="_blank" rel="noopener"><span data-chain-text="contract-short">…</span></a>。链上事实来自 <code>frontend/chain.json</code>。</p>
+    <p>Project GENESIS v0.6 · 确定性文明模拟 + 押注游戏 · 为 Monad Blitz 而生</p>
+    <p class="footer-note">打开方式：<code>cd frontend &amp;&amp; python -m http.server</code> 后访问 http://localhost:8000；也可以直接双击 index.html（本地文件模式显示种子 42 存档，实时对局与实时重算需要用上面的方式打开）。</p>
   </footer>
 </main>
 
