@@ -140,9 +140,10 @@ the engine handles all of them, and the invariants hold regardless.
   engine one: other agents can bid and ask whatever they like.
 - **Inequality drifts upward.** Workers in uncrowded occupations earn slightly
   more than they spend; workers in crowded ones slightly less, because floors sit
-  10 % below break-even. With no investment, credit, taxes, transfers or
-  inheritance, money slowly accumulates with the former, and over a year a few
-  of the poorest can die.
+  10 % below break-even. With no investment, credit, transfers or
+  inheritance (a redistribution tax exists as a session policy — see
+  "Policy levers" — but is off by default), money slowly accumulates with
+  the former, and over a year a few of the poorest can die.
 - **Demand is perfectly inelastic.** Residents need exactly one unit of each
   resource per day and want nothing beyond a buffer. There are no luxuries,
   substitutes or durable goods.
@@ -154,6 +155,29 @@ the engine handles all of them, and the invariants hold regardless.
 - **One shared market**, no geography, transport or storage costs, no spoilage.
 - **Agents are not optimisers.** The rule-based policy is a transparent
   heuristic, not a utility maximiser.
+
+## Policy levers: change the world on purpose
+
+Two levers are built for playing with the world — the same two the browser
+playground exposes. Both change the state digest, which is the point: a
+policy that did nothing would be decoration.
+
+- **Redistribution tax** (`Simulation(..., tax_rate_bps=N)`, 0–10,000 bps).
+  Each day every living resident pays N/10,000 of their cash into a pool,
+  and the pool is split equally among the living. Money is conserved
+  exactly. Measured on seed 42, 100 days: no tax → Gini 0.308, richest
+  428.66, poorest 46.89; 5 % → Gini 0.083; 10 % → Gini 0.054, richest
+  210.44, poorest 153.29. The tax is a session policy, not a world config,
+  so a zero-tax run is bit-for-bit the golden seed-42 world (the digest
+  already anchored on Monad) — a taxed run still changes the digest through
+  its `TAX` events in the log. Try it:
+  `python main.py play --seed 42 --days 100 --tax-bps 1000`.
+- **Market openness** (`max_orders_per_day`, 0–10). How many orders each
+  resident may place per day. The rule-based residents never place more
+  than 3, so the cap only binds below 3 — and there it bites hard: at 2
+  orders a day the town makes 98 trades and dies; at 0 it makes none and
+  dies faster. Try it:
+  `python main.py play --seed 42 --days 100 --max-orders 2`.
 
 ## Experimenting
 
