@@ -36,7 +36,7 @@ chain_id = 10143
 
 [[accounts]]
 label = "alice"
-address = "0x00000000000000000000000000000000000a11ce"
+address = "0xE705B6cDfDc682bE49bdDa177A695207ff67Bf35"
 balance = "10 ether"
 description = """
 Placeholder sender address. Before a live run, replace this with the address
@@ -45,7 +45,7 @@ must be that key's address. Offline (loopback) runs use this address as-is."""
 
 [[accounts]]
 label = "bob"
-address = "0x0000000000000000000000000000000000000b0b"
+address = "0xEa3C22fE64eF4BfAf0fE58F49b7dF5fC5ABA3A09"
 balance = "0 ether"
 description = """
 Recipient. For a live run use a fresh address (one with a zero balance), or
